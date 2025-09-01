@@ -1,0 +1,117 @@
+Layout
+--------------------------------------------------
+|H |"Home"              |      [Timeline]        |
+|SR|Scripts/resources   |------------------------|
+|x |File 1              |                        |
+|y |File 2              |                        |
+|z |File 3              |                        |
+|  |                    |      [Render]          |
+|  |  [Text editor]     |      [Preview]         |
+|  |  [or other pane]   |                        |
+|  |                    |                        |
+|? |Help                |                        |
+--------------------------------------------------
+
+Scripts / Resources Pane
+--------------------------------------------------
+|H |+Add                |      [Timeline]        |
+|SR| [Script list]      |------------------------|
+|x |[Directory listing] |                        |
+|y |                    |                        |
+|z |                    |                        |
+|  |--------------------|      [Render]          |
+|  |+Add                |      [Preview]         |
+|  |   [Resource list]  |                        |
+|  |   [Grid listing]   |                        |
+|? |                    |                        |
+--------------------------------------------------
+
+Home pane
+--------------------------------------------------
+|H | New project        |      [Timeline]        |
+|SR| Open project       |------------------------|
+|x | Import             |                        |
+|y | Export             |                        |
+|z | Save               |                        |
+|  |                    |      [Render]          |
+|  |                    |      [Preview]         |
+|  |                    |                        |
+|  |                    |                        |
+|? |                    |                        |
+--------------------------------------------------
+
+Script pane
+--------------------------------------------------
+|H |                    |      [Timeline]        |
+|SR|  [vscode style]    |------------------------|
+|x |  [text editor]     |                        |
+|y |                    |                        |
+|z |                    |                        |
+|  |                    |      [Render]          |
+|  |                    |      [Preview]         |
+|  |                    |                        |
+|  |                    |                        |
+|? |                    |                        |
+--------------------------------------------------
+
+
+- Main idea: Single page web application that can act as a powerful osu storyboard editor
+
+General:
+- All layout bars are draggable for resizing
+- Light mode and dark mode
+  - Tier2: Custom theming / theme files
+- Gonna need documentation
+
+Sidebar:
+- Tabs are variable size, think about dealing with overflow
+
+Text editor / Scripting:
+- Lua
+- Standard Library Functions
+- Typing the word "gettime" or something and pressing enter will replace itself
+with the current time in the render window
+Scripts / resources panel:
+- Double clicking a script will open said file in text editor, adding a tab in
+the side panel
+
+Timeline:
+- Similar to video editing software
+- "group by": resources, scripts
+
+Render preview:
+- Clicking a resource will highlight the hitbox, anchor, and any sort of path/trajectory
+  - How to visualize easing functions?
+- Shown resources are "locked" by default, with a right click menu option or keyboard shortcut
+  available to "unlock" and allow dragging around or deleting, changes will be reflected in the script
+  - "Unlocking" might be a challenge, definitely a 2nd tier feature
+
+Keyboard shortcuts:
+- Switch between sidebar tabs (files directory, resources, script)
+- Insert current time in render preview
+- 
+
+Import/export:
+- Import is for images
+- Export will export a zip file with all images and the .osb
+- Save will download a single file to the user that can be used with "Open project"
+  - Need to figure out if this is possible, embedding pictures is pretty much a must
+    for usability.
+
+Lua:
+- 
+
+
+Tech stack:
+- Svelte
+- Layout: GoldenLayout / Mosaic / React-resizable-panels
+- Text editor: Monaco to start, see if I can get performance gains with CodeMirror
+               while hooking up the advanced features that Monaco has out of the box
+  - Lua LSP: Monaco has it built in, CodeMirror needs codemirror-lsp
+- Timeline: React Flow / Konva / Custom solution
+  - this might be the trickiest to implement without being sluggish,
+    wonder if PixiJS can handle this as well?
+
+- Render preview: PixiJS
+- File handling: File Access API / JSZip(?)
+- State management: Zustand
