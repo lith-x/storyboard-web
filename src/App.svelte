@@ -1,36 +1,51 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import Sidebar from "./lib/Sidebar.svelte";
+  import Timeline from "./lib/Timeline.svelte";
+  import Renderer from "./lib/Renderer.svelte";
+  import ControlBar from "./lib/ControlBar.svelte";
+
+  // TODO: have something more unique becaues possible name collisions
+  const rowDividerId = "rowDivider";
+  const colDividerId = "colDivider";
+
   const sidebarWidth = 55;
+  const controlBarHeight = 55;
   let panelWidth = $state(30);
   let timelineHeight = $state(25);
-  let isDragging = $state(false);
   let gridColWidths = $derived(`${sidebarWidth}px ${panelWidth}% 1px 1fr`);
-  let gridRowHeight = $derived(`${timelineHeight}% 1px 1fr`);
+  let gridRowHeights = $derived(
+    `${timelineHeight}% 1px 1fr ${controlBarHeight}px`
+  );
 
-  let colDivider!: HTMLDivElement;
-  let rowDivider!: HTMLDivElement;
-  onMount(() => {
-    const resizeWidthFn = (ev: MouseEvent) => {
-      const newWidth = ((ev.clientX - sidebarWidth) / window.innerWidth) * 100;
-      panelWidth = newWidth > 0 ? newWidth : 0;
-    };
-    const resizeHeightFn = (ev: MouseEvent) => {
-      const newHeight = (ev.clientY / window.innerHeight) * 100;
-      timelineHeight = newHeight > 0 ? newHeight : 0;
-    };
-    colDivider.addEventListener("mousedown", () => {
-      document.body.style.cursor = "col-resize";
-      document.addEventListener("mousemove", resizeWidthFn);
-    });
-    rowDivider.addEventListener("mousedown", () => {
-      document.body.style.cursor = "row-resize";
-      document.addEventListener("mousemove", resizeHeightFn);
-    });
-    document.addEventListener("mouseup", () => {
-      document.body.style.cursor = "";
-      document.removeEventListener("mousemove", resizeWidthFn);
-      document.removeEventListener("mousemove", resizeHeightFn);
-    });
+  const resizeWidthFn = (ev: MouseEvent) => {
+    const newWidth = ((ev.clientX - sidebarWidth) / window.innerWidth) * 100;
+    panelWidth = newWidth > 0 ? newWidth : 0;
+  };
+
+  const resizeHeightFn = (ev: MouseEvent) => {
+    const newHeight = (ev.clientY / window.innerHeight) * 100;
+    timelineHeight = newHeight > 0 ? newHeight : 0;
+  };
+  document.addEventListener("mousedown", (ev) => {
+    switch ((ev.target as HTMLElement).id) {
+      case rowDividerId:
+        {
+          document.body.style.cursor = "row-resize";
+          document.addEventListener("mousemove", resizeHeightFn);
+        }
+        break;
+      case colDividerId:
+        {
+          document.body.style.cursor = "col-resize";
+          document.addEventListener("mousemove", resizeWidthFn);
+        }
+        break;
+    }
+  });
+  document.addEventListener("mouseup", (ev) => {
+    document.body.style.cursor = "";
+    document.removeEventListener("mousemove", resizeWidthFn);
+    document.removeEventListener("mousemove", resizeHeightFn);
   });
 </script>
 
@@ -38,16 +53,21 @@
   class="grid h-screen w-screen"
   style="grid-template-columns: {gridColWidths};"
 >
-  <div class="bg-amber-600"></div>
-  <div class="bg-zinc-900"></div>
-  <div bind:this={colDivider} class="cursor-col-resize"></div>
+  <div class="bg-amber-600">
+    <Sidebar />
+  </div>
+  <div class="bg-zinc-900">
+    <!-- Depending on what is selected on sidebar, could be one of any in /lib/panels/* -->
+  </div>
+  <div id={colDividerId} class="cursor-col-resize"></div>
   <div
     class="grid grid-cols-subgrid"
-    style="grid-template-rows: {gridRowHeight};"
+    style="grid-template-rows: {gridRowHeights};"
   >
-    <div class="bg-indigo-900"></div>
-    <div bind:this={rowDivider} class="cursor-row-resize"></div>
-    <div class="bg-pink-900"></div>
+    <Timeline />
+    <div id={rowDividerId} class="cursor-row-resize"></div>
+    <Renderer />
+    <ControlBar />
   </div>
 </main>
 

@@ -1,0 +1,160 @@
+TODO: see if timestamp starts at 0 or 1
+
+object = sprite | animation | audio
+- objects are instantiated with a single line under [Events] section
+  - all commands that effect an object are listed under said object
+time parameters are in milliseconds
+comments are per-line, must start with //
+ - i.e. no "[command] // comment"
+quotes for strings (typically filepaths) are optional unless there's whitespace
+
+[Toggles]
+- Under [General], "UseSkinSprites: 1" allows use of player's skin as sprites for storyboard
+  - don't use if including the skin with map or supplying your own sprites
+
+[Variables]
+- Section of .osb (NOT .osu) file, where "$variable=[constant]" are defined.
+- Basically #define directives, except they work in reverse
+  (all instances of [constant] upon saving in beatmap editor will be replaced with $variable).
+
+[X,Y Dimensions]
+Editor:    ([0..640], [0..480])
+Play area: ([60..570],[55..440])
+
+[Layers] (type: layer)
+0 = Background
+1 = Fail (shown in "fail state")
+2 = Pass (shown in "pass state")
+3 = Foreground
+(There is technically an "overlay" layer, but it's deprecated)
+- number ~ Z-depth
+- only pass XOR fail is shown
+- map always starts in pass state
+
+[Origin] (type: origin)
+0 = TopLeft
+1 = Centre
+2 = CentreLeft
+3 = TopRight
+4 = BottomCentre
+5 = TopCentre
+6 = Custom (same effect as TopLeft, but should not be used)
+7 = CentreRight
+8 = BottomLeft
+9 = BottomRight
+
+[Easings] (type: easing)
+https://easings.net/
+0  = Linear: no easing
+1  = Easing Out: the changes happen fast at first, but then slow down toward the end
+2  = Easing In: the changes happen slowly at first, but then speed up toward the end
+3  = Quad In
+4  = Quad Out
+5  = Quad In/Out
+6  = Cubic In
+7  = Cubic Out
+8  = Cubic In/Out
+9  = Quart In
+10 = Quart Out
+11 = Quart In/Out
+12 = Quint In
+13 = Quint Out
+14 = Quint In/Out
+15 = Sine In
+16 = Sine Out
+17 = Sine In/Out
+18 = Expo In
+19 = Expo Out
+20 = Expo In/Out
+21 = Circ In
+22 = Circ Out
+23 = Circ In/Out
+24 = Elastic In
+25 = Elastic Out
+26 = ElasticHalf Out
+27 = ElasticQuarter Out
+28 = Elastic In/Out
+29 = Back In
+30 = Back Out
+31 = Back In/Out
+32 = Bounce In
+33 = Bounce Out
+34 = Bounce In/Out
+
+[Trigger] (type: trigger)
+- "Passing" (fail state -> pass state)
+- "Failing" (pass state -> fail state)
+- "Hitsound" + [Set?][AdditionsSet?][Addition?][CustomSet?]
+  - Set / AdditionsSet = All | Normal | Soft | Drum
+  - Addition = Whistle | Finish | Clap
+  - CustomSet = int (# in sample set)
+
+[Sprite]
+Sprite,(layer:layer),(origin:origin),"(filepath:string)",(x:int),(y:int)
+
+[Animation]
+Animation,(layer:layer),(origin:origin),"(filepath:string)",(x:int),(y:int),(frameCount:int),(frameDelay:int),(looptype:looptype)
+
+[Loop Type] (type: looptype)
+- looptype = LoopOnce | LoopForever
+- LoopOnce = stop when last frame is reached
+- LoopForever = when last frame is done, start again from the beginning
+
+[Audio samples]
+Sample,(time:int[0..]),(layer_num:layer),"(filepath:string)",(volume:int[1..100])
+- if volume is left out, it defaults to 100
+
+[Commands]
+_(event),(easing),(starttime),(endtime),(params...)
+- "_" / " " are interchangeable at start of command
+
+[Events] (type: event)
+F = Fade
+- params: (start_opacity:float[0..1]),(end_opacity:float[0..1])
+M = Move
+- params: (start_x:int),(start_y:int),(end_x:int),(end_y:int)
+MX = Move X
+- params: (start_x:int),(end_x:int)
+MY = Move Y
+- params: (start_y:int),(end_y:int)
+S = Scale
+- params: (start_scale:float[0..]),(end_scale:float[0..])
+- scale multiplier: default 1, scales from origin point
+V = Vector scale
+- params: (start_scale_x:float[0..]),(start_scale_y:float[0..]),(end_scale_x:float[0..]),(end_scale_y:float[0..])
+- same as scale, but x/y are independent
+R = Rotate
+- params: (start_rotate:float),(end_rotate:float)
+- rotations are in radians, positive is clockwise, negative is anti-clockwise
+C = Color
+- params: (start_r:uchar),(start_g:uchar),(start_b:uchar),(end_r:uchar),(end_g:uchar),(end_b:uchar)
+P = Parameter
+- params: (parameter:param)
+- type param: H = flip horizontal, V = flip vertical, A = additive instead of default (alpha-blending)
+
+[Compound Commands]
+- All events starting with "__" under the event (sub-events) are considered "part" of the event
+L = Loop
+- _L,(starttime:int),(loopcount:int)
+  - __(event),(easing),(relative_starttime),(relative_endtime),(params...)
+T = Trigger
+- _T,(triggerType:trigger),(starttime:int),(endtime:int)
+  - __(event),(easing),(relative_starttime),(relative_endtime),(params...)
+
+Event shorthand:
+- If a list of events is the same in easing,event,duration, and happen subsequent of one another where
+  end of one is start of another, the new end vals can just be tacked on
+_(event1),(easing1),(starttime),(starttime + duration),(startval(s)1),(endval(s)1)
+_(event1),(easing1),(starttime + duration),(starttime + 2*duration),(endval(s)1),(endval(s)2)
+_(event1),(easing1),(starttime + 2*duration),(starttime + 3*duration),(endval(s)2),(endval(s)3)
+etc. (can be arbitrarily long)
+- shorthand: _(event1),(easing1),(starttime),(starttime + duration),(startval(s)1),(endval(s)1),(endval(s)2),(endval(s)3)
+ex: _F,0,1000,2000,0,1 (\n) _F,0,2000,3000,1,0.5 <=> _F,0,1000,2000,0,1,0.5
+
+- If endtime == starttime, it can be omitted, leaving the space as ",,"
+_(event),(easing),(starttime),(endtime == starttime),(params...)
+- shorthand: _(event),(easing),(starttime),,(params...)
+
+- If the endval == startval, endval can be omitted entirely
+_(event),(easing),(starttime),(endtime),(startvalue),(endvalue == startvalue)
+- shorthand: _(event),(easing),(starttime),(endtime),(startvalue)
