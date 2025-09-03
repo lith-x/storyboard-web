@@ -1,6 +1,6 @@
 <!-- Sidebar.svelte -->
 <script lang="ts">
-  import { topSidebarTabData, settingsTabData } from "./shared.svelte";
+  import { topTabs, bottomTabs } from "./shared.svelte";
   let { collapsed = $bindable() as boolean, active = $bindable() as string } =
     $props();
 
@@ -26,17 +26,19 @@
   </div>
 
   <div class="p-2">
-    {#each topSidebarTabData as tab}
-      <button
-        class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left hover:bg-gray-700
+    {#each topTabs as tab}
+      {#if tab}
+        <button
+          class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left hover:bg-gray-700
           {active === tab.id ? 'bg-gray-700 font-semibold' : ''}"
-        onclick={() => (active = tab.id)}
-      >
-        <span>{tab.icon}</span>
-        {#if !collapsed}
-          <span>{tab.label}</span>
-        {/if}
-      </button>
+          onclick={() => (active = tab.id)}
+        >
+          <span>{tab.icon}</span>
+          {#if !collapsed}
+            <span>{tab.label}</span>
+          {/if}
+        </button>
+      {/if}
     {/each}
   </div>
 
@@ -74,15 +76,19 @@
   </div>
 
   <div class="p-2">
-    <button
-      class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left hover:bg-gray-700
-          {active === settingsTabData.id ? 'bg-gray-700 font-semibold' : ''}"
-      onclick={() => (active = settingsTabData.id)}
-    >
-      <span>{settingsTabData.icon}</span>
-      {#if !collapsed}
-        <span>{settingsTabData.label}</span>
+    {#each bottomTabs as tab}
+      {#if tab}
+        <button
+          class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left hover:bg-gray-700
+          {active === tab.id ? 'bg-gray-700 font-semibold' : ''}"
+          onclick={() => (active = tab.id)}
+        >
+          <span>{tab.icon}</span>
+          {#if !collapsed}
+            <span>{tab.label}</span>
+          {/if}
+        </button>
       {/if}
-    </button>
+    {/each}
   </div>
 </div>

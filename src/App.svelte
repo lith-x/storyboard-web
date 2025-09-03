@@ -60,7 +60,7 @@
   style="grid-template-columns: {gridColWidths};"
 >
   <Sidebar bind:collapsed={sidebarCollapsed} bind:active={activeTab} />
-  <Panel />
+  <Panel bind:activeTab={activeTab} />
   <div id={colDividerId} class="cursor-col-resize"></div>
   <div
     class="grid grid-cols-subgrid"

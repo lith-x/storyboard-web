@@ -1,11 +1,13 @@
-type TabData = { id: string, label: string, icon: string }
+// TODO: figure out better data placement/organization such that
+//       potential future refactors would be easier, less bouncing
+//       around between files to keep track of where all I use this.
+//       maybe within Panel files, or centralize "Home" as a single
 
-export const topSidebarTabData: TabData[] = [
-    { id: "%%home", label: "Home", icon: "🏠" },
-    { id: "%%files", label: "Files", icon: "📔" }
-];
-export const defaultActiveTab = topSidebarTabData[0].id;
+export const homeTabData = { id: "%%home", label: "Home", icon: "🏠" };
+export const fileTabData = { id: "%%files", label: "Files", icon: "📔" };
+export const settingsTabData = { id: "%%settings", label: "Settings", icon: "⚙️" };
 
-export const settingsTabData: TabData = {
-    id: "%%settings", label: "Settings", icon: "⚙️"
-};
+export const topTabs = [homeTabData, fileTabData];
+export const bottomTabs = [settingsTabData];
+
+export const defaultActiveTab = homeTabData.id;
