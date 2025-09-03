@@ -49,26 +49,33 @@
   <div class="mx-2 my-2 border-t border-gray-700"></div>
 
   <!-- Dynamic file list -->
+  <!-- Dynamic file list -->
   <div class="flex-1 overflow-y-auto p-2">
     {#each files as file}
-      <div class="flex">
-      <button
-        class="flex-2 w-full items-center justify-between rounded-md px-3 py-2 text-left hover:bg-gray-700
-          {active === file.id ? 'bg-gray-700 font-semibold' : ''}"
-        onclick={() => (active = file.id)}
+      <div
+        class="flex items-center justify-between rounded-md hover:bg-gray-700 {active === file.id ? 'bg-gray-700 font-semibold' : ''}"
       >
-        <span class="truncate">
-          📄 {!collapsed ? file.name : ""}
-        </span>
-      </button>
-      {#if !collapsed}
+        <!-- File activate button -->
         <button
-          class="flex-1 text-gray-400 hover:text-red-400"
-          onclick={() => files.splice(files.indexOf(file), 1)}
+          class="flex flex-1 items-center gap-2 px-3 py-2 text-left"
+          onclick={() => (active = file.id)}
         >
-          ✕
+          <span>📄</span>
+          {#if !collapsed}
+            <span class="truncate">{file.name}</span>
+          {/if}
         </button>
-      {/if}
+
+        <!-- Close button -->
+        {#if !collapsed}
+          <button
+            class="px-2 text-gray-400 hover:text-red-400"
+            aria-label="Close file"
+            onclick={() => files.splice(files.indexOf(file), 1)}
+          >
+            ✕
+          </button>
+        {/if}
       </div>
     {/each}
   </div>
