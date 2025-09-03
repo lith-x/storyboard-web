@@ -8,10 +8,13 @@
   const rowDividerId = "rowDivider";
   const colDividerId = "colDivider";
 
-  const sidebarWidth = 55;
   const controlBarHeight = 55;
+
   let panelWidth = $state(30);
   let timelineHeight = $state(25);
+  let sidebarCollapsed = $state(false);
+  let sidebarWidth = $derived(sidebarCollapsed ? 55 : 224);
+
   let gridColWidths = $derived(`${sidebarWidth}px ${panelWidth}% 1px 1fr`);
   let gridRowHeights = $derived(
     `${timelineHeight}% 1px 1fr ${controlBarHeight}px`
@@ -54,7 +57,7 @@
   style="grid-template-columns: {gridColWidths};"
 >
   <div class="bg-amber-600">
-    <Sidebar />
+    <Sidebar bind:collapsed={sidebarCollapsed} />
   </div>
   <div class="bg-zinc-900">
     <!-- Depending on what is selected on sidebar, could be one of any in /lib/panels/* -->

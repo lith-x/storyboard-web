@@ -1,5 +1,3 @@
-TODO: see if timestamp starts at 0 or 1
-
 object = sprite | animation | audio
 - objects are instantiated with a single line under [Events] section
   - all commands that effect an object are listed under said object
@@ -7,6 +5,7 @@ time parameters are in milliseconds
 comments are per-line, must start with //
  - i.e. no "[command] // comment"
 quotes for strings (typically filepaths) are optional unless there's whitespace
+Z-ordering is determined by which object occurs first in sb file
 
 [Toggles]
 - Under [General], "UseSkinSprites: 1" allows use of player's skin as sprites for storyboard
@@ -20,6 +19,9 @@ quotes for strings (typically filepaths) are optional unless there's whitespace
 [X,Y Dimensions]
 Editor:    ([0..640], [0..480])
 Play area: ([60..570],[55..440])
+- Render method when aspect ratio doesn't match (lazer):
+  - Too much width: black on either side
+  - Too much height: cut off width on either side
 
 [Layers] (type: layer)
 0 = Background

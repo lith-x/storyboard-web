@@ -1,0 +1,85 @@
+High-level overview:
+
+    [JS Script]
+        |
+        v
+   (a. JS -> Data) -----> [Renderer Preview]
+        |
+        v
+   (b. Data -> .osb) -----> [.osb File]
+                                |
+                                v
+                        (c. optional: .osb -> Data)
+                                |
+                                v
+                           [Renderer Preview]
+
+a. "Render" - could be automatic upon saving the script, if performance allows
+b. "Compile" - JS to Data to .osb, exposes .osb in Files subdirectory as read-only,
+               also happens upon export
+c. Give option to put .osb into "debug mode", where there are several visual
+   indications that the JS script and .osb are desync'd and .osb is now
+   source of truth for renderer, either as a copy that gets saved with a mark to
+   indicate that it's a "virtual" file for debug purposes, or simply disposed
+   upon "Render" or "Compile" call.
+ - Probably going to do this anyway for testing purposes (import existing beatmap)
+
+JS Script  = Javascript user scripts (work on adding typescript support)
+Data = internal data representation for use by application
+.osb = file in format readable by osu client
+
+
+Old notes:
+
+JS script compilation pipelines:
+- "compile" - to end-user, will look like a JS -> .osb transformation
+- "render"  - to end-user, will look like updating the renderer given a change in the script
+- "JS"     - scripts that users will write
+- "Data"    - data representation that will be used in the render/timeline
+  - Data is internal representation, could potentially be used in export/save for
+    quicker opening (no need to reparse/recompile)
+- ".osb"    - actual file that will run in the osu client
+  - Only generated upon "compile" command (button?) to preview in "Files" or exporting
+  - The .osb is just there for show, editing this will not change the render, probably
+    warn users about this? Or does the .osb become the source of truth for renderer?
+
+- JS -> Data
+  - most efficient way to get a script to preview in application
+  - will definitely happen when clicking some button like "run" or "render"
+- JS -> .osb
+  - fastest way to do things for export if data is unavailable
+- Data -> .osb
+  - good if data representation already exists, adds extra step if it doesn't
+    if the user just wants to export
+- Data -> JS
+  - Not sure if it'd be useful to users to expose this or bother
+- .osb -> Data ✅
+  - necessary for importing/previewing existing storyboards, seems like a necessity
+- .osb -> JS ❌
+  - similar to a "decompiler", it'd be fun but definitely a feature for later if at all
+
+- If it ends up being fast enough, JS -> .osb could be automatic upon any save
+  - Could be togglable "compile on save" option, on by default?
+
+- Workable schemes
+  - read-only osb file:
+    - JS -> Data & Data -> .osb
+      - Might be speedier than other options if data is done in a smart way.
+    - JS -> Data & JS -> .osb
+      - fastest option, only use pipeline for intended use when used, but
+        .osb would be only superficial, with apparent "desync" issues if edited directly.
+  - read/write osb file:
+    - JS -> .osb & .osb -> Data
+      - the generated .osb available in Files would be the source of truth,
+        could be edited directly and preview would reflect this with the least hassle,
+        most intuitive for users.
+      - two compilation steps might be slow,
+    - JS -> Data & JS -> .osb & .osb -> Data
+      - If .osb exists and is generated, .osb -> Data pipeline takes priority 
+        by default until some user action listed below
+      - Upon "render", use JS -> Data, visualize in any existing .osb that it's
+        no longer the source of truth for the render and any edits won't matter
+        to what's being presented.
+      - Upon "compile", use JS -> .osb & .osb -> Data, .osb becomes source of truth
+      - performance of "JS -> Data & JS -> .osb" while enabling write for .osb,
+        but at the cost of more code, and more complexity for both me and user.

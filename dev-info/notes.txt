@@ -67,7 +67,7 @@ Sidebar:
 - Tabs are variable size, think about dealing with overflow
 
 Text editor / Scripting:
-- Lua
+- Typescript
 - Standard Library Functions
 - Typing the word "gettime" or something and pressing enter will replace itself
 with the current time in the render window
@@ -98,20 +98,43 @@ Import/export:
   - Need to figure out if this is possible, embedding pictures is pretty much a must
     for usability.
 
-Lua:
-- 
-
-
 Tech stack:
 - Svelte
 - Layout: GoldenLayout / Mosaic / React-resizable-panels
 - Text editor: Monaco to start, see if I can get performance gains with CodeMirror
                while hooking up the advanced features that Monaco has out of the box
-  - Lua LSP: Monaco has it built in, CodeMirror needs codemirror-lsp
+  - Typescript LSP: Monaco has it built in, CodeMirror ?
 - Timeline: React Flow / Konva / Custom solution
   - this might be the trickiest to implement without being sluggish,
     wonder if PixiJS can handle this as well?
 
 - Render preview: PixiJS
 - File handling: File Access API / JSZip(?)
-- State management: Zustand
+
+
+Additional Features:
+- Drag width/height of renderer with reset button to default
+- Drag n Drop osz/olz (both seem to be identical) to initialize project
+  - Resources will start with every .osu file
+    - There will be a default "selected difficulty", which you can change by clicking
+    - Drag and drop .osu files, prompt on overwrite
+  - Beatmap Info would be nice
+- Source map .osb files to lines of code in scripts responsible for its generation.
+
+Questions:
+- Does storyboard overwrite BG or let it stand?
+- What is WidescreenStoryboard?
+
+
+TODO List:
+- Text Editor
+- UI (done progressively, cross bridges as they arise?)
+  - Panels: Home, Files, Scripts, Settings/Help
+  - Sidebar
+  - ControlBar
+- Backend (hook pieces together to enable functionality)
+  - Data representation
+  - Render / Timeline synchronization/optimization
+  - Parsing/compiling: .osb->data & data->.osb
+  - Typescript API library for writing
+- Timeline
