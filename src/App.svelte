@@ -1,8 +1,10 @@
 <script lang="ts">
+  import { defaultActiveTab } from "./lib/shared.svelte";
   import Sidebar from "./lib/Sidebar.svelte";
   import Timeline from "./lib/Timeline.svelte";
   import Renderer from "./lib/Renderer.svelte";
   import ControlBar from "./lib/ControlBar.svelte";
+  import Panel from "./lib/Panel.svelte";
 
   // TODO: have something more unique becaues possible name collisions
   const rowDividerId = "rowDivider";
@@ -13,6 +15,7 @@
   let panelWidth = $state(30);
   let timelineHeight = $state(25);
   let sidebarCollapsed = $state(false);
+  let activeTab = $state(defaultActiveTab);
   let sidebarWidth = $derived(sidebarCollapsed ? 55 : 224);
 
   let gridColWidths = $derived(`${sidebarWidth}px ${panelWidth}% 1px 1fr`);
@@ -56,12 +59,8 @@
   class="grid h-screen w-screen"
   style="grid-template-columns: {gridColWidths};"
 >
-  <div class="bg-amber-600">
-    <Sidebar bind:collapsed={sidebarCollapsed} />
-  </div>
-  <div class="bg-zinc-900">
-    <!-- Depending on what is selected on sidebar, could be one of any in /lib/panels/* -->
-  </div>
+  <Sidebar bind:collapsed={sidebarCollapsed} bind:active={activeTab} />
+  <Panel />
   <div id={colDividerId} class="cursor-col-resize"></div>
   <div
     class="grid grid-cols-subgrid"
