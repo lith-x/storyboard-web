@@ -6,7 +6,8 @@
                  by "Export" functionality
   Import - open file browser, allow user to select any file/directory to be imported
            into the "files" section,
-  Export - 
+  Export - save some compressed filetype that includes all files, scripts, and potentially
+           some information about the application state (current time, layout data, etc.)
   */
 </script>
 
