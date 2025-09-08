@@ -1,1 +1,21 @@
-- Inspired by Storybrew
+Storyboard object
+ - created with functions like sprite(filepath, opts)
+ - have a time cursor associated with each sprite, can change it
+   with functions like at(time) to set the timestamp
+ - each command will have its own function i.e. command(startval, endval?, duration?)
+   - if duration is null/undefined, use last one, with 0 as default if none was set
+     - let user know default is 0 when doing something like this through
+       disable-able warning
+   - if endval is undefined, assume endval == startval
+
+"command" functions follow params: startval(s), endval(s)?, duration?
+"also" function does not modify the conceptual "time cursor" at all.
+
+example:
+const blob = sprite("sb/blob.png", {x: 0, y: 0});
+blob
+    .at(0).fade(0.5) // time: 0, fade: 0.5, dur: 0
+    .move(100, 100, 1000) // time: 0, pos: (0,0)->(100,100), dur: 1000
+    .also().rotate(0, Math.PI, 500) // time: 0, rotate: 0->PI, dur: 500
+    .move(150, 150, 300) // time: 1000 pos: (100,100)->(150,150), dur: 300
+    .at(50).scale(1, 2) // time: 50, scale: 1->2, dur: 300 
