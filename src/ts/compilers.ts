@@ -1,11 +1,14 @@
 import {
     CommandType, CommandTypeMap, Easing, EasingMap, Layer, LayerMap,
-    Origin, OriginMap, SbObjectType, type StoryboardData, type StoryboardObject
+    Origin, OriginMap, SbObjectType, type Command, type CommandTypes, type StoryboardData, type StoryboardObject
 } from "./internalData";
 
 /*
 TODO: don't forget z-indexing when making the objects, defined by the order
       declared in osb file, first = back, last = front.
+
+official parser:
+https://github.com/ppy/osu/blob/master/osu.Game/Beatmaps/Formats/LegacyStoryboardDecoder.cs
 */
 
 const lineToSprite = (line: string[]) => {
@@ -27,17 +30,60 @@ const lineToSprite = (line: string[]) => {
         playTime: null
     } as StoryboardObject;
 }
+const pushCmd = (sb: StoryboardData, cmd: Command) => {
+    if (!sb.commands.has(cmd.startTime)) {
+        sb.commands.set(cmd.startTime, [cmd]);
+    } else {
+        sb.commands.get(cmd.startTime)!.push(cmd);
+    }
+};
 
 const gatherCommands = (lines: string[], idx: number, sb: StoryboardData, objId: string) => {
     let currLine: string;
     const obj = sb.objects.get(objId);
     while ((currLine = lines[idx++]).startsWith(" ") || currLine.startsWith("_")) {
+        const id = crypto.randomUUID(); // TODO: replace UUID's with plain ints incrementing
         const parts = currLine.split(",");
-        const cmdType = parts[0].substring(1);
+        const cmdType = parts[0].substring(1) as CommandTypes;
         const easing = EasingMap[parts[1]];
         const startTime = parseInt(parts[2]);
         const endTime = parseInt(parts[3]);
-
+        switch (cmdType) {
+            case "L": { } break;
+            case "T": { } break;
+            case "P": {
+                pushCmd(sb, {
+                    id: id,
+                    objectId: objId,
+                    type: cmdType,
+                    easing: easing,
+                    startTime: startTime,
+                    endTime: endTime,
+                    params: null,
+                    hvaParam: parts[4] as "H" | "V" | "A",
+                    trigger: null,
+                    subCommands: null,
+                });
+            } break;
+            default: {
+                const params: number[] = [];
+                for (let i = 4; i < parts.length; i++) {
+                    params.push(parseFloat(parts[i])); // TODO: discriminate ints from floats here?
+                }
+                pushCmd(sb, {
+                    id: id,
+                    objectId: objId,
+                    type: cmdType,
+                    easing: easing,
+                    startTime: startTime,
+                    endTime: endTime,
+                    params: params,
+                    hvaParam: null,
+                    trigger: null,
+                    subCommands: null
+                });
+            }
+        }
     }
     return idx;
 };

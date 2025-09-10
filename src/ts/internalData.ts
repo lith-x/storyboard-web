@@ -207,15 +207,17 @@ export interface StoryboardObject {
     // Commands affecting this object
     commandIds: Set<CommandID>;
 }
-
+export type CommandTypes = "F" | "M" | "MX" | "MY" | "S" | "V" | "R" | "C" | "P" | "L" | "T";
 export interface Command {
     id: CommandID;
     objectId: ObjectID;
-    type: "F" | "M" | "MX" | "MY" | "S" | "V" | "R" | "C" | "P" | "L" | "T";
+    type: CommandTypes;
     easing: number;
     startTime: Timestamp;
     endTime: Timestamp;
-    params: number[];
+    params: number[] | null;
+    hvaParam: "H" | "V" | "A" | null;
+    trigger: "Passing" | "Failing" | string | null;
     subCommands: Command[] | null;
     // sourceLocation: { line: number; column: number; file: string } | null;
 }
@@ -253,4 +255,13 @@ Storyboard
 
 ObjectStore
 CommandStore
+
+data layout in osu:
+Layer {
+  SbObject[]
+}
+SbObject {
+  Command[]
+}
+
 */
