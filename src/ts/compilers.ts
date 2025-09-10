@@ -1,7 +1,6 @@
 import {
     CommandType, CommandTypeMap, Easing, EasingMap, Layer, LayerMap,
-    Origin, OriginMap, SbObjectType, type Command, type Storyboard,
-    type StoryboardObject, type TimelineEntry
+    Origin, OriginMap, SbObjectType, type StoryboardData, type StoryboardObject
 } from "./internalData";
 
 /*
@@ -15,11 +14,12 @@ const lineToSprite = (line: string[]) => {
     const origin = OriginMap[line[2]] ? OriginMap[line[2]] : parseInt(line[2]) as Origin;
     return {
         id: crypto.randomUUID(),
-        type: SbObjectType.Sprite,
+        type: "sprite",
         layer,
         origin,
         filepath: line[3],
-        initialPosition: { x: parseInt(line[4]), y: parseInt(line[5]) },
+        x: parseInt(line[4]),
+        y: parseInt(line[5]),
         frameCount: null,
         frameDelay: null,
         loopType: null,
@@ -28,94 +28,18 @@ const lineToSprite = (line: string[]) => {
     } as StoryboardObject;
 }
 
-const lineToCommand = (line: string[], id: string) => {
-    const cmdType = CommandTypeMap[line[0].substring(1)];
-    // TODO: figure out what enums can be represented as strings, and
-    //       which MUST be numeric. pretty sure easing MUST be numeric
-    //       but not super sure, so leaving this in.
-    const easing = EasingMap[line[1]] ? EasingMap[line[1]] : parseInt(line[1]) as Easing;
-    const startTime = parseInt(line[2]);
-    const endTime = parseInt(line[3]);
-    const baseCommand = {
-        type: cmdType,
-        easing: EasingMap[line[1]] ? EasingMap[line[1]] : parseInt(line[1]) as Easing,
-        startTime: parseInt(line[2]),
-        endTime: parseInt(line[3]),
-        startOpacity: undefined, endOpacity: undefined,
-        startX: undefined, startY: undefined, endX: undefined, endY: undefined,
+const gatherCommands = (lines: string[], idx: number, sb: StoryboardData, objId: string) => {
+    let currLine: string;
+    const obj = sb.objects.get(objId);
+    while ((currLine = lines[idx++]).startsWith(" ") || currLine.startsWith("_")) {
+        const parts = currLine.split(",");
+        const cmdType = parts[0].substring(1);
+        const easing = EasingMap[parts[1]];
+        const startTime = parseInt(parts[2]);
+        const endTime = parseInt(parts[3]);
 
-    } as Command;
-    let cmdParams;
-    switch (cmdType) {
-        case CommandType.Fade: {
-            cmdParams = {
-                startOpacity: parseFloat(line[4]),
-                endOpacity: parseFloat(line[5])
-            } as Omit<FadeCommand, keyof BaseCommand>;
-        } break;
-        case CommandType.Move: {
-            cmdParams = {
-                startX: parseInt(line[4]),
-                startY: parseInt(line[5]),
-                endX: parseInt(line[6]),
-                endY: parseInt(line[7])
-            } as Omit<MoveCommand, keyof BaseCommand>;
-        } break;
-        case CommandType.MoveX: {
-            cmdParams = {
-                startX: parseInt(line[4]),
-                endX: parseInt(line[5])
-            } as Omit<MoveXCommand, keyof BaseCommand>;
-        } break;
-        case CommandType.MoveY: {
-            cmdParams = {
-                startY: parseInt(line[4]),
-                endY: parseInt(line[5])
-            } as Omit<MoveYCommand, keyof BaseCommand>;
-        } break;
-        case CommandType.Scale: {
-            cmdParams = {
-                startScale: parseInt(line[4]),
-                endScale: parseInt(line[5])
-            } as Omit<ScaleCommand, keyof BaseCommand>;
-        } break;
-        case CommandType.VectorScale: {
-            cmdParams = {
-                startScaleX: parseFloat(line[4]),
-                startScaleY: parseFloat(line[5]),
-                endScaleX: parseFloat(line[6]),
-                endScaleY: parseFloat(line[7])
-            } as Omit<VectorScaleCommand, keyof BaseCommand>;
-        } break;
-        case CommandType.Rotate: {
-            cmdParams = {
-                startRotation: parseFloat(line[4]),
-                endRotation: parseFloat(line[5])
-            } as Omit<RotateCommand, keyof BaseCommand>;
-        } break;
-        case CommandType.Color: {
-            cmdParams = {
-                startR: parseInt(line[4]),
-                startG: parseInt(line[5]),
-                startB: parseInt(line[6]),
-                endR: parseInt(line[7]),
-                endG: parseInt(line[8]),
-                endB: parseInt(line[9])
-            } as Omit<ColorCommand, keyof BaseCommand>;
-        } break;
-        case CommandType.Parameter: {
-            cmdParams = {
-                parameter: line[4]
-            } as Omit<ParameterCommand, keyof BaseCommand>;
-        } break;
-        default: {
-        } break;
     }
-    return {
-        command: Object.assign(baseCommand, cmdParams),
-        objectId: id,
-        time: startTime
-    } as TimelineEntry;
+    return idx;
 };
 
 /**
@@ -145,9 +69,10 @@ const osbToIr = async (filepath: string) => {
     let lineIdx = 0;
     const lines = refinedFileText.split("\n");
     const linesLen = lines.length;
-    const sb: Storyboard = {
+    const sb: StoryboardData = {
+        useSkinSprites: false,
         objects: new Map(),
-        timeline: []
+        commands: new Map(),
     };
 
     do {
@@ -159,13 +84,8 @@ const osbToIr = async (filepath: string) => {
             case "Sprite": {
                 const sprite = lineToSprite(line);
                 sb.objects.set(sprite.id, sprite);
-                while (true) {
-                    const command = CommandTypeMap[]
-                    sb.timeline.push({
-                        command: 
-                    })
-                    lineIdx += 1;
-                }
+                lineIdx = gatherCommands(lines, lineIdx, sb, sprite.id);
+
             } break;
             case "Animation": {
 

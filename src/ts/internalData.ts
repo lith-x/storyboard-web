@@ -176,205 +176,81 @@ export const CommandTypeMap: Record<string, CommandType> = {
     "P": CommandType.Parameter
 };
 
-export interface Vec2 {
-    x: number;
-    y: number;
+// Data
+
+type CommandID = string;
+type ObjectID = string;
+type Timestamp = number;
+
+export interface StoryboardData {
+    useSkinSprites: boolean;
+    objects: Map<ObjectID, StoryboardObject>;
+    commands: Map<Timestamp, Command[]>;
 }
 
-
-class SimpleCommandArray {
-    private data: ArrayBuffer;
-    private types: Uint8Array;
-    private easings: Uint8Array;
-    private startTimes: Uint32Array;
-    private endTimes: Uint32Array;
-    private startOpacities: Float32Array;
-    private endOpacities: Float32Array;
-    private startXs: Int16Array;
-    private startYs: Int16Array;
-    private endXs: Int16Array;
-    private endYs: Int16Array;
-    private startScaleXs: Float32Array;
-    private startScaleYs: Float32Array;
-    private endScaleXs: Float32Array;
-    private endScaleYs: Float32Array;
-    private startRotations: Float32Array;
-    private endRotations: Float32Array;
-    private startRs: Uint8Array;
-    private startGs: Uint8Array;
-    private startBs: Uint8Array;
-    private endRs: Uint8Array;
-    private endGs: Uint8Array;
-    private endBs: Uint8Array;
-    private parameters: Uint8Array;
-    // TODO/optimization: probably slower, but could help with memory footprint,
-    //   gather all commands, then have a build(), or require the counts in the constructor,
-    //   and only allocate needed memory, maintain indirection tables for each array
-    constructor(count: number) {
-        const fields8Bit = 9;
-        const array8BitBytes = count * Int8Array.BYTES_PER_ELEMENT;
-        const fields16Bit = 4;
-        const array16BitBytes = count * Int16Array.BYTES_PER_ELEMENT;
-        const fields32Bit = 10;
-        const array32BitBytes = count * Int32Array.BYTES_PER_ELEMENT;
-        this.data = new ArrayBuffer(
-            fields8Bit * array8BitBytes +
-            fields16Bit * array16BitBytes +
-            fields32Bit * array32BitBytes
-        );
-        let offset = 0;
-        // type: uint8 (enum, 8 vals)
-        this.types = new Uint8Array(this.data, offset, count);
-        offset += array8BitBytes;
-        // easing: uint8 (enum, 35 vals)
-        this.easings = new Uint8Array(this.data, offset, count);
-        offset += array8BitBytes;
-        // startTime: uint32
-        this.startTimes = new Uint32Array(this.data, offset, count);
-        offset += array32BitBytes;
-        // endTime: uint32
-        this.endTimes = new Uint32Array(this.data, offset, count);
-        offset += array32BitBytes;
-        
-        // Fade:
-        //   startOpacity: float32
-        this.startOpacities = new Float32Array(this.data, offset, count);
-        offset += array32BitBytes;
-        //   endOpacity: float32
-        this.endOpacities = new Float32Array(this.data, offset, count);
-        offset += array32BitBytes;
-
-        // Move/MoveX/MoveY:
-        //   startX: int16(?)
-        this.startXs = new Int16Array(this.data, offset, count);
-        offset += array16BitBytes;
-        //   startY: int16(?)
-        this.startYs = new Int16Array(this.data, offset, count);
-        offset += array16BitBytes;
-        //   endX: int16(?)
-        this.endXs = new Int16Array(this.data, offset, count);
-        offset += array16BitBytes;
-        //   endY: int16(?)
-        this.endYs = new Int16Array(this.data, offset, count);
-        offset += array16BitBytes;
-        // Scale/VectorScale:
-        //   startScale(X): float32
-        this.startScaleXs = new Float32Array(this.data, offset, count);
-        offset += array32BitBytes;
-        //   startScaleY: float32
-        this.startScaleYs = new Float32Array(this.data, offset, count);
-        offset += array32BitBytes;
-        //   endScale(X): float32
-        this.endScaleXs = new Float32Array(this.data, offset, count);
-        offset += array32BitBytes;
-        //   endScaleY: float32
-        this.endScaleYs = new Float32Array(this.data, offset, count);
-        offset += array32BitBytes;
-        // Rotate:
-        //   startRotation: float32
-        this.startRotations = new Float32Array(this.data, offset, count);
-        offset += array32BitBytes;
-        //   endRotation: float32
-        this.endRotations = new Float32Array(this.data, offset, count);
-        offset += array32BitBytes;
-        // Color:
-        //   startR: uint8
-        this.startRs = new Uint8Array(this.data, offset, count);
-        offset += array8BitBytes;
-        //   startG: uint8
-        this.startGs = new Uint8Array(this.data, offset, count);
-        offset += array8BitBytes;
-        //   startB: uint8
-        this.startBs = new Uint8Array(this.data, offset, count);
-        offset += array8BitBytes;
-        //   endR: uint8
-        this.endRs = new Uint8Array(this.data, offset, count);
-        offset += array8BitBytes;
-        //   endG: uint8
-        this.endGs = new Uint8Array(this.data, offset, count);
-        offset += array8BitBytes;
-        //   endB: uint8
-        this.endBs = new Uint8Array(this.data, offset, count);
-        offset += array8BitBytes;
-        // Parameter:
-        //   params: uint8 (enum, 3 vals)
-        this.parameters = new Uint8Array(this.data, offset, count);
-        offset += array8BitBytes;
-    }
-}
-
-export type Command = {
-    type: CommandType;
-    easing: Easing;
-    startTime: number;
-    endTime: number;
-    // Fade
-    startOpacity: number | undefined;
-    endOpacity: number | undefined;
-    // Move/MoveX/MoveY
-    startX: number | undefined;
-    startY: number | undefined;
-    endX: number | undefined;
-    endY: number | undefined;
-    // Scale/VectorScale (scale in vector is scaleX)
-    startScale: number | undefined;
-    startScaleY: number | undefined;
-    endScale: number | undefined;
-    endScaleY: number | undefined;
-    // Rotate
-    startRotation: number | undefined;
-    endRotation: number | undefined;
-    // Color
-    startR: number | undefined;
-    startG: number | undefined;
-    startB: number | undefined;
-    endR: number | undefined;
-    endG: number | undefined;
-    endB: number | undefined;
-    // Parameter
-    parameter: "H" | "V" | "A" | undefined;
-}
 
 export interface StoryboardObject {
-    id: string;
-    type: SbObjectType;
-    layer: Layer;
-    origin: Origin;
+    id: ObjectID;
+    type: "sprite" | "animation" | "audio";
+    layer: number;
+    origin: number;
     filepath: string;
-    initialPosition: Vec2 | null;
+    x: number;
+    y: number;
+    // Animation-specific
     frameCount: number | null;
-    frameDelay: number | null;
-    loopType: LoopType | null;
+    frameDelay: Timestamp | null;
+    loopType: "LoopOnce" | "LoopForever" | null;
+    // Audio sample-specific
     volume: number | null;
-    playTime: number | null;
+    playTime: Timestamp | null;
+    // Commands affecting this object
+    commandIds: Set<CommandID>;
 }
 
-// used for optimization caching when the time comes
+export interface Command {
+    id: CommandID;
+    objectId: ObjectID;
+    type: "F" | "M" | "MX" | "MY" | "S" | "V" | "R" | "C" | "P" | "L" | "T";
+    easing: number;
+    startTime: Timestamp;
+    endTime: Timestamp;
+    params: number[];
+    subCommands: Command[] | null;
+    // sourceLocation: { line: number; column: number; file: string } | null;
+}
+
+export interface TimelineBuckets {
+    bucketSizeMs: number; // time interval in ms
+    buckets: Map<number, CommandBucket>;
+}
+
+export interface CommandBucket {
+    startTime: Timestamp;
+    endTime: Timestamp;
+    commands: CommandID[];
+    activeObjects: Set<ObjectID>; // objects where state has been computed
+}
+
 export interface ObjectState {
-    position: Vec2;
-    scale: Vec2;
-    rotation: number;
+    objectId: ObjectID;
+    time: Timestamp;
     opacity: number;
-    color: { r: number, g: number, b: number };
-    flipHorizontal: boolean;
-    flipVertical: boolean;
-    additiveBlending: boolean;
-    visible: boolean;
-    zIndex: number;
+    position: { x: number; y: number };
+    scale: { x: number; y: number };
+    rotation: number;
+    color: { r: number; g: number; b: number };
+    parameters: Set<"H" | "V" | "A">;
 }
 
-export interface TimelineEntry {
-    time: number;
-    objectId: string;
-    command: Command;
-}
+/*
 
-export interface Storyboard {
-    objects: Map<string, StoryboardObject>;
-    timeline: TimelineEntry[]; // NOTE: this needs to be kept sorted in order by ascending startTime val.
+Storyboard
+- Objects
+  - CommandId[]
+- Commands
+  - ObjectId
 
-    // optimization ideas
-    // frameCache: Map<number, Map<string, ObjectState>>; // time -> objId -> state
-    // activePeriods: Map<string, Array<[number, number]>>; // use this to filter to only objects that are active
-    //                                                      // between map.get(id)[0] and map.get(id)[1]
-}
+ObjectStore
+CommandStore
+*/

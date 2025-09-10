@@ -138,3 +138,10 @@ TODO List:
   - Parsing/compiling: .osb->data & data->.osb
   - Typescript API library for writing
 - Timeline
+
+
+
+Performance:
+- lengths: short: 30 sec, avg: 2-4 mins, long: 6 mins, very long: 10 mins, incredibly long but not unheard of: 30 mins
+- commands: long, complex storyboards can well above 500,000 individual command lines
+- sprites: looking at potentially hundreds.

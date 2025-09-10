@@ -1,6 +1,3 @@
-osu storyboarding
-- lengths: short: 30 sec, avg: 2-4 mins, long: 6 mins, very long: 10 mins, incredibly long but not unheard of: 30 mins
-
 object = sprite | animation | audio
 - objects are instantiated with a single line under [Events] section
   - all commands that effect an object are listed under said object
