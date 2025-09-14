@@ -1,4 +1,5 @@
 <script lang="ts">
+  // TODO: make the dividers opaque
   import { defaultActiveTab } from "./lib/shared.svelte";
   import Sidebar from "./lib/Sidebar.svelte";
   import Timeline from "./lib/Timeline.svelte";
