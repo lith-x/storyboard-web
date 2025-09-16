@@ -1,156 +1,262 @@
-type Easing = string; // dummy type, fill in later.
+type Values<T> = T[keyof T];
 
-// TODO: If (startVals, <undefined>, duration) is called on any command, throw an error
-// that tells the user to get rid of the undefined, or use .at(duration).command(startVals)
-
-// TODO: if 
-
-const fadeImpl = (id: string, time: number, also: boolean, lastDuration: number): FadeCallback => {
-    return (easing: Easing, startOpacity: number, endOpacity?: number, duration?: number) => {
-        // cases 1=defined, 0=undefined
-        // endOpacity 1, duration 1 (do nothing)
-        // endOpacity 1, duration 0 (set duration to 0, done)
-        // endOpacity 0, duration 1 (just throw an error "no value will be changed, use at() to skip time")
-        // endOpacity 
-        if (endOpacity === undefined) duration = 0;
-        else if (duration === undefined) {
-            duration = endOpacity;
-            endOpacity = startOpacity;
-        }
-        return allFuncsObj(id, time, false, lastDuration);
-    };
-};
-
-const moveImpl = (id: string, time: number, also: boolean, lastDuration: number): MoveCallback => {
-    return (easing: Easing, startX: number, startY: number, endX?: number, endY?: number, duration: number = 0) => {
-        // add move event
-        return allFuncsObj(id, time, false, lastDuration);
-    }
-};
-const moveXImpl = (id: string, time: number, also: boolean, lastDuration: number): MoveXCallback => {
-    return (easing: Easing, startX: number, endX?: number, duration: number = 0) => {
-        // add moveX event
-        return allFuncsObj(id, time, false, lastDuration);
-    }
-};
-const moveYImpl = (id: string, time: number, also: boolean, lastDuration: number): MoveYCallback => {
-    return (easing: Easing, startY: number, endY?: number, duration: number = 0) => {
-        // add moveX event
-        return allFuncsObj(id, time, false, lastDuration);
-    }
-};
-const scaleImpl = (id: string, time: number, also: boolean, lastDuration: number): ScaleCallback => {
-    return (easing: Easing, startScale: number, endScale?: number, duration: number = 0) => {
-        // add scale event
-        return allFuncsObj(id, time, false, lastDuration);
-    };
-};
-const vectorScaleImpl = (id: string, time: number, also: boolean, lastDuration: number): VectorScaleCallback => {
-    return (easing: Easing, startScaleX: number, startScaleY: number, endScaleX?: number, endScaleY?: number, duration: number = 0) => {
-        // add vectorScale event
-        return allFuncsObj(id, time, false, lastDuration);
-    };
-}
-const rotateImpl = (id: string, time: number, also: boolean, lastDuration: number): RotateCallback => {
-    return (easing: Easing, startRotation: number, endRotation?: number, duration: number = 0) => {
-        // add rotate event
-        return allFuncsObj(id, time, false, lastDuration);
-    };
-};
-const colorImpl = (id: string, time: number, also: boolean, lastDuration: number): ColorCallback => {
-    return (easing: Easing, startR: number, startG: number, startB: number, endR?: number, endG?: number, endB?: number, duration: number = 0) => {
-        // add color event
-        return allFuncsObj(id, time, false, lastDuration);
-    }
-};
-const paramImpl = (id: string, time: number, also: boolean, lastDuration: number): ParamCallback => {
-    return (easing: Easing, param: Parameter, duration: number = 0) => {
-        // add parameter event
-        return allFuncsObj(id, time, false, lastDuration);
-    }
-};
-
-const atImpl = (id: string, lastDuration: number) => {
-    return (time: number) => {
-        // change internal cursor
-        return commandsObj(id, time, false, lastDuration);
-    }
-};
-
-const alsoImpl = (id: string, time: number, lastDuration: number) => {
-    return () => commandsObj(id, time, true, lastDuration);
-};
-
-const waitImpl = (id: string, lastDuration: number) => {
-    return (duration: number) => {
-        // change internal cursor and pass along
-        return commandsObj(id, duration, false, lastDuration);
-    }
-}
-
-type MoveCallback = {
-    (easing: Easing, x: number, y: number): AllFunctionsChain;
-    (easing: Easing, toX: number, toY: number, duration: number): AllFunctionsChain;
-    (easing: Easing, startX: number, startY: number, endX: number, endY: number, duration: number): AllFunctionsChain;
-}
-
-type FadeCallback = {
-    (easing: Easing, opacity: number): AllFunctionsChain;
-    (easing: Easing, toOpacity: number, duration: number): AllFunctionsChain;
-    (easing: Easing, startOpacity: number, endOpacity: number, duration: number): AllFunctionsChain;
-}
-
-type MoveXCallback = {
-    (easing: Easing, x: number): AllFunctionsChain;
-    (easing: Easing, toX: number, duration: number): AllFunctionsChain;
-    (easing: Easing, startX: number, endX: number, duration: number): AllFunctionsChain;
-}
-
-type MoveYCallback = {
-    (easing: Easing, y: number): AllFunctionsChain;
-    (easing: Easing, toY: number, duration: number): AllFunctionsChain;
-    (easing: Easing, startY: number, endY: number, duration: number): AllFunctionsChain;
-}
-
-type ScaleCallback = {
-    (easing: Easing, scale: number): AllFunctionsChain;
-    (easing: Easing, toScale: number, duration: number): AllFunctionsChain;
-    (easing: Easing, startScale: number, endScale: number, duration: number): AllFunctionsChain;
-}
-
-type VectorScaleCallback = {
-    (easing: Easing, xScale: number, yScale: number): AllFunctionsChain;
-    (easing: Easing, toXScale: number, toYScale: number, duration: number): AllFunctionsChain;
-    (easing: Easing, startXScale: number, startYScale: number, endXScale: number, endYScale: number, duration: number): AllFunctionsChain;
-}
-
-type RotateCallback = {
-    (easing: Easing, rotation: number): AllFunctionsChain;
-    (easing: Easing, toRotation: number, duration: number): AllFunctionsChain;
-    (easing: Easing, startRotation: number, endRotation: number, duration: number): AllFunctionsChain;
-}
-
-type ColorCallback = {
-    (easing: Easing, r: number, g: number, b: number): AllFunctionsChain;
-    (easing: Easing, toR: number, toG: number, toB: number, duration: number): AllFunctionsChain;
-    (easing: Easing, startR: number, startG: number, startB: number, endR: number, endG: number, endB: number, duration: number): AllFunctionsChain;
-}
+export const Easing = {
+    Linear: 0,
+    EasingOut: 1,
+    EasingIn: 2,
+    QuadIn: 3,
+    QuadOut: 4,
+    QuadInOut: 5,
+    CubicIn: 6,
+    CubicOut: 7,
+    CubicInOut: 8,
+    QuartIn: 9,
+    QuartOut: 10,
+    QuartInOut: 11,
+    QuintIn: 12,
+    QuintOut: 13,
+    QuintInOut: 14,
+    SineIn: 15,
+    SineOut: 16,
+    SineInOut: 17,
+    ExpoIn: 18,
+    ExpoOut: 19,
+    ExpoInOut: 20,
+    CircIn: 21,
+    CircOut: 22,
+    CircInOut: 23,
+    ElasticIn: 24,
+    ElasticOut: 25,
+    ElasticHalfOut: 26,
+    ElasticQuarterOut: 27,
+    ElasticInOut: 28,
+    BackIn: 29,
+    BackOut: 30,
+    BackInOut: 31,
+    BounceIn: 32,
+    BounceOut: 33,
+    BounceInOut: 34,
+} as const;
+export type Easing = Values<typeof Easing>;
 
 const Parameter = {
     Horizontal: "H",
     Vertical: "V",
     AlphaBlend: "A"
 } as const;
-type Parameter = typeof Parameter[keyof typeof Parameter];
+type Parameter = Values<typeof Parameter>;
 
-type ParamCallback = {
-    (easing: Easing, param: Parameter): AllFunctionsChain;
-    (easing: Easing, toParam: Parameter, duration: number): AllFunctionsChain;
+const Origin = {
+    TopLeft: "TopLeft",
+    Centre: "Centre",
+    CentreLeft: "CentreLeft",
+    TopRight: "TopRight",
+    BottomCentre: "BottomCentre",
+    TopCentre: "TopCentre",
+    Custom: "Custom",
+    CentreRight: "CentreRight",
+    BottomLeft: "BottomLeft",
+    BottomRight: "BottomRight"
+} as const;
+type Origin = Values<typeof Origin>;
+
+const Layer = {
+    Background: "Background",
+    Fail: "Fail",
+    Pass: "Pass",
+    Foreground: "Foreground"
+} as const;
+type Layer = Values<typeof Layer>;
+
+const CmdType = {
+    Fade: "F",
+    Move: "M",
+    MoveX: "MX",
+    MoveY: "MY",
+    Scale: "S",
+    VectorScale: "V",
+    Rotate: "R",
+    Color: "C",
+    Parameter: "P"
+} as const;
+type CmdType = Values<typeof CmdType>;
+
+interface SpriteOpts {
+    x?: number,
+    y?: number,
+    origin?: Origin,
+    layer?: Layer
 }
 
+type ObjState = {
+    posX: number,
+    posY: number,
+    scaleX: number,
+    scaleY: number,
+    opacity: number,
+    rotation: number,
+    colorR: number,
+    colorG: number,
+    colorB: number,
+    parameter: Set<Parameter>
+}
+type ObjNumParam = keyof Omit<ObjState, "parameter">;
+
+interface ObjEvent {
+    type: CmdType,
+    easing: Easing,
+    startTime: number,
+    endTime: number,
+    params: number[]
+}
+
+interface ChainData {
+    objId: string,
+    also: boolean,
+    time: number,
+    lastDuration: number,
+    objState: ObjState,
+    events: ObjEvent[]
+}
+
+
+type OneParamCommandCallback = {
+    (toValue: number, duration?: number, easing?: Easing): AllFunctionsChain;
+    (range: [startValue: number, endValue: number], duration?: number, easing?: Easing): AllFunctionsChain;
+}
+
+const singleParamCommand = (data: ChainData, type: CmdType, field: ObjNumParam): OneParamCommandCallback => {
+    return (vals: number | number[], duration?: number, easing?: Easing) => {
+        const realDuration = duration ?? 0;
+        const evt: ObjEvent = {
+            easing: easing ?? Easing.Linear,
+            startTime: data.time,
+            endTime: data.time + realDuration,
+            type: type,
+            params: []
+        };
+        if (typeof vals === "number") {
+            evt.params.push(data.objState[field]);
+            evt.params.push(vals);
+            data.objState[field] = vals;
+        } else {
+            evt.params.push(vals[0]);
+            evt.params.push(vals[1]);
+            data.objState[field] = vals[1];
+        }
+        data.events.push(evt);
+
+        if (data.also) {
+            data.also = false;
+        } else {
+            data.time += realDuration;
+        }
+        return allFuncsObj(data);
+    };
+};
+
+
+const fadeImpl = (data: ChainData) => singleParamCommand(data, CmdType.Fade, "opacity");
+const moveXImpl = (data: ChainData) => singleParamCommand(data, CmdType.MoveX, "posX");
+const moveYImpl = (data: ChainData) => singleParamCommand(data, CmdType.MoveY, "posY");
+const rotateImpl = (data: ChainData) => singleParamCommand(data, CmdType.Rotate, "rotation");
+
+
+type XYCallback = {
+    (toX: number, toY: number, duration?: number, easing?: Easing): AllFunctionsChain;
+    (startX: number, startY: number, endX: number, endY: number, duration?: number, easing?: Easing): AllFunctionsChain;
+}
+
+const moveImpl = (data: ChainData): XYCallback => {
+    return (startOrToX: number, startOrToY: number, endXOrDuration?: number, endYMaybe?: number, durationMaybe?: number, easing?: Easing) => {
+        // add move event
+        return allFuncsObj(data);
+    }
+};
+
+const vectorScaleImpl = (data: ChainData): XYCallback => {
+    return (startOrToScaleX: number, startOrToScaleY: number, endScaleXOrDuration?: number, endScaleYMaybe?: number, durationMaybe?: number, easing?: Easing) => {
+        // add vectorScale event
+        return allFuncsObj(data);
+    };
+}
+
+const scaleImpl = (data: ChainData): OneParamCommandCallback => {
+    return (vals: number | number[], duration?: number, easing?: Easing) => {
+        if (typeof vals === "number") {
+            return vectorScaleImpl(data)(vals, vals, duration, easing);
+        } else {
+            return vectorScaleImpl(data)(vals[0], vals[0], vals[1], vals[1], duration, easing);
+        }
+    };
+};
+
+
+type ColorCallback = {
+    (toR: number, toG: number, toB: number, duration?: number, easing?: Easing): AllFunctionsChain;
+    (startR: number, startG: number, startB: number, endR: number, endG: number, endB: number, duration: number, easing?: Easing): AllFunctionsChain;
+}
+
+const colorImpl = (data: ChainData): ColorCallback => {
+    return (startR: number, startG: number, startB: number, endR?: number, endG?: number, endB?: number, duration?: number, easing?: Easing) => {
+        // add color event
+        return allFuncsObj(data);
+    }
+};
+
+type ParamCallback = {
+    (param: Parameter, easing?: Easing): AllFunctionsChain;
+    (toParam: Parameter, duration: number, easing?: Easing): AllFunctionsChain;
+}
+
+const paramImpl = (data: ChainData): ParamCallback => {
+    return (param: Parameter, duration?: number, easing?: Easing) => {
+        // add parameter event
+        return allFuncsObj(data);
+    }
+};
+
+
 type AtCallback = (time: number) => CommandsChain;
+
+const atImpl = (data: ChainData) => {
+    return (time: number) => {
+        data.time = time;
+        return commandsObj(data);
+    }
+};
+
+
 type AlsoCallback = () => CommandsChain;
-type WaitCallback = () => CommandsChain;
+
+const alsoImpl = (data: ChainData) => {
+    return () => {
+        data.also = true;
+        commandsObj(data);
+    }
+};
+
+
+type WaitCallback = (time: number) => CommandsChain;
+
+const waitImpl = (data: ChainData) => {
+    return (duration: number) => {
+        data.time += duration;
+        return commandsObj(data);
+    }
+}
+
+type CommandsChain = {
+    fade: OneParamCommandCallback,
+    moveX: OneParamCommandCallback,
+    moveY: OneParamCommandCallback,
+    scale: OneParamCommandCallback,
+    rotate: OneParamCommandCallback,
+    move: XYCallback,
+    vectorScale: XYCallback,
+    color: ColorCallback,
+    param: ParamCallback,
+}
 
 type AllFunctionsChain = CommandsChain & {
     at: AtCallback,
@@ -158,62 +264,40 @@ type AllFunctionsChain = CommandsChain & {
     wait: WaitCallback
 }
 
-type CommandsChain = {
-    fade: FadeCallback,
-    move: MoveCallback,
-    moveX: MoveXCallback,
-    moveY: MoveYCallback,
-    scale: ScaleCallback,
-    vectorScale: VectorScaleCallback,
-    rotate: RotateCallback,
-    color: ColorCallback,
-    param: ParamCallback,
-}
-
-const commandsObj = (id: string, time: number, also: boolean, lastDuration: number) => {
+const commandsObj = (data: ChainData) => {
     return {
-        fade: fadeImpl(id, time, also, lastDuration),
-        move: moveImpl(id, time, also, lastDuration),
-        moveX: moveXImpl(id, time, also, lastDuration),
-        moveY: moveYImpl(id, time, also, lastDuration),
-        scale: scaleImpl(id, time, also, lastDuration),
-        vectorScale: vectorScaleImpl(id, time, also, lastDuration),
-        rotate: rotateImpl(id, time, also, lastDuration),
-        color: colorImpl(id, time, also, lastDuration),
-        param: paramImpl(id, time, also, lastDuration),
+        fade: fadeImpl(data),
+        move: moveImpl(data),
+        moveX: moveXImpl(data),
+        moveY: moveYImpl(data),
+        scale: scaleImpl(data),
+        vectorScale: vectorScaleImpl(data),
+        rotate: rotateImpl(data),
+        color: colorImpl(data),
+        param: paramImpl(data),
     }
 }
 
-const allFuncsObj = (id: string, time: number, also: boolean, lastDuration: number) => {
+const allFuncsObj = (data: ChainData) => {
     return {
-        at: atImpl(id, lastDuration),
-        wait: waitImpl(id, lastDuration),
-        also: alsoImpl(id, time, lastDuration),
-        fade: fadeImpl(id, time, also, lastDuration),
-        move: moveImpl(id, time, also, lastDuration),
-        moveX: moveXImpl(id, time, also, lastDuration),
-        moveY: moveYImpl(id, time, also, lastDuration),
-        scale: scaleImpl(id, time, also, lastDuration),
-        vectorScale: vectorScaleImpl(id, time, also, lastDuration),
-        rotate: rotateImpl(id, time, also, lastDuration),
-        color: colorImpl(id, time, also, lastDuration),
-        param: paramImpl(id, time, also, lastDuration),
+        at: atImpl(data),
+        wait: waitImpl(data),
+        also: alsoImpl(data),
+        fade: fadeImpl(data),
+        move: moveImpl(data),
+        moveX: moveXImpl(data),
+        moveY: moveYImpl(data),
+        scale: scaleImpl(data),
+        vectorScale: vectorScaleImpl(data),
+        rotate: rotateImpl(data),
+        color: colorImpl(data),
+        param: paramImpl(data),
     } as AllFunctionsChain;
 }
 
-// this is a dummy interface to try to get what this may look like
-// with actual code, everything under this is pretty much temporary,
-// except the return value of "sprite" and the function chaining.
-interface SpriteOpts {
-    x: number, y: number
-}
-interface ObjData {
-    contents: Blob,
-    position: { x: number, y: number }
-}
-interface FileData { id: string, contents: Blob }
 
-const objs = new Map<string, ObjData>();
+
+interface FileData { id: string, contents: Blob }
 
 const _getFile = (filepath: string) => {
     // dummy function
@@ -223,28 +307,41 @@ const _getFile = (filepath: string) => {
     } as FileData;
 }
 
+const objs: ChainData[] = [];
 
 export const sprite = (filepath: string, opts?: SpriteOpts) => {
     // TODO: grab file from IndexedDB / cache
     const file = _getFile(filepath);
-    objs.set(file.id, {
-        // relevant file data, put here.
-        contents: file.contents,
-        position: { x: opts?.x ?? 0, y: opts?.y ?? 0 }
-    });
+    const data: ChainData = {
+        time: 0,
+        also: false,
+        lastDuration: 0,
+        objId: file.id,
+        events: [],
+        objState: {
+            posX: opts?.x ?? 0,
+            posY: opts?.y ?? 0,
+            scaleX: 1,
+            scaleY: 1,
+            opacity: 1,
+            rotation: 0,
+            colorR: 255,
+            colorG: 255,
+            colorB: 255,
+            parameter: new Set(),
+        }
+    };
+    objs.push(data);
     return {
-        at: atImpl(file.id, 0)
+        at: atImpl(data)
     };
 };
 
 // Sample
 
-// TODO: easings were tacked on at the end because i forgor about them,
-//       I want there to be a way to have a linear-by-default easing value,
-//       but the overloads would get incredibly jank. Try to figure this out.
 const foo = sprite("sb/blob.png", { x: 0, y: 0 });
-foo.at(0).fade("", 0.5) // time: 0, fade: 0.5, dur: 0
-    .move("", 100, 100, 1000) // time: 0, pos: (0,0)->(100,100), dur: 1000
-    .also().rotate("", 0, Math.PI, 500) // time: 0, rotate: 0->PI, dur: 500
-    .move("", 150, 150, 300) // time: 1000 pos: (100,100)->(150,150), dur: 300
-    .at(50).scale("", 1, 2) // time: 50, scale: 1->2, dur: 300
+foo.at(0).fade(0.5) // time: 0, fade: 0.5, dur: 0
+    .move(100, 100, 1000, Easing.BackInOut) // time: 0, pos: (0,0)->(100,100), dur: 1000
+    .also().rotate([0, Math.PI], 500) // time: 0, rotate: 0->PI, dur: 500
+    .move(150, 150, 300) // time: 1000 pos: (100,100)->(150,150), dur: 300
+    .at(50).scale([1, 2]) // time: 50, scale: 1->2, dur: 300
