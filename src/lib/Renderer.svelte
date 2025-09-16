@@ -1,32 +1,34 @@
 <script lang="ts">
-    import { Application, Sprite, Texture, TextureSource } from "pixi.js";
+    import { getAllFileInfo, getFile } from "../ts/dbHandler";
+    import * as r from "../ts/render.svelte";
     import { onDestroy, onMount } from "svelte";
     let elt!: HTMLDivElement;
-    let observer: ResizeObserver | undefined;
-    let app: Application | undefined;
     const setupApp = async () => {
-        app = new Application();
-        await app.init({ resizeTo: elt, background: "#555" });
-        elt.appendChild(app.canvas);
-        const observer = new ResizeObserver(() => {
-            const { clientWidth, clientHeight } = elt;
-            app!.renderer.resize(clientWidth, clientHeight);
-        });
-        observer.observe(elt);
-        const texture = new Texture({});
-        const sprite = new Sprite({
-            x: app.canvas.width / 2,
-            y: app.canvas.height / 2,
-            anchor: { x: 0.5, y: 0.5 },
-        });
+        await r.init(elt, {});
+        // const fileInfo = await getAllFileInfo();
+        const mychar = new File(
+            [await (await fetch("char.png")).arrayBuffer()],
+            "char.png",
+            { type: "image/png" },
+        );
+        r.addSprite(mychar, r.Layer.Foreground);
+        const bg = new File(
+            [await (await fetch("bg1.jpg")).arrayBuffer()],
+            "bg1.jpg",
+            { type: "image/jpeg" },
+        );
+        r.addSprite(bg, r.Layer.Background);
+        // for (const info of fileInfo) {
+        //     if (info.type.startsWith("image/")) {
+        //         r.addSprite(await getFile(info.id), r.Layer.Background);
+        //         break;
+        //     }
+        // }
     };
-
-    onMount(setupApp);
-
-    onDestroy(() => {
-        observer?.disconnect();
-        app?.destroy(true);
+    onMount(async () => {
+        await setupApp();
     });
+    onDestroy(r.destroy);
 </script>
 
-<div bind:this={elt} class="bg-pink-900 w-full h-full"></div>
+<div bind:this={elt} class="bg-pink-900 h-screen w-screen"></div>

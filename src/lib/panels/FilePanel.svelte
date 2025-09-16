@@ -31,7 +31,6 @@
     }
 </script>
 
-<!-- Upload button -->
 <div class="p-4">
     <!-- TODO: top right instead of top left of the pane -->
     <label

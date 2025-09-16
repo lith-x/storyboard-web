@@ -12,8 +12,8 @@ Storyboard object
 "also" function does not modify the conceptual "time cursor" at all.
 
 example:
-const blob = sprite("sb/blob.png", {x: 0, y: 0});
-blob
+const foo = sprite("sb/blob.png", {x: 0, y: 0});
+foo
     .at(0).fade(0.5) // time: 0, fade: 0.5, dur: 0
     .move(100, 100, 1000) // time: 0, pos: (0,0)->(100,100), dur: 1000
     .also().rotate(0, Math.PI, 500) // time: 0, rotate: 0->PI, dur: 500

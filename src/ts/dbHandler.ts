@@ -95,6 +95,12 @@ export const saveFile = async (file: File, path: string, id?: string): Promise<s
         const tx = db.transaction([FILE_METADATA_STORE, FILE_CONTENT_STORE], "readwrite");
 
         return new Promise<string>((resolve, reject) => {
+            const metaStore = tx.objectStore(FILE_METADATA_STORE);
+            const contentStore = tx.objectStore(FILE_CONTENT_STORE);
+
+            metaStore.put(metadata);
+            contentStore.put(content);
+
             tx.oncomplete = () => {
                 const existingIndex = metadataCache.findIndex(f => f.id === metadata.id);
                 if (existingIndex >= 0) {
@@ -105,13 +111,6 @@ export const saveFile = async (file: File, path: string, id?: string): Promise<s
                 resolve(fileId);
             };
             tx.onerror = () => reject(new FileSystemError("Transaction failed", tx.error));
-
-            // Perform both operations in the same transaction
-            const metaStore = tx.objectStore(FILE_METADATA_STORE);
-            const contentStore = tx.objectStore(FILE_CONTENT_STORE);
-
-            metaStore.put(metadata);
-            contentStore.put(content);
         });
     } catch (error) {
         throw new FileSystemError("Failed to save file", error);
@@ -165,11 +164,12 @@ export const getDirectoryContents = async (dirPath: string): Promise<FileMetadat
 
 const openDB = async (): Promise<IDBDatabase> => {
     if (dbInstance) return dbInstance;
+    indexedDB.deleteDatabase(DATABASE_NAME); // TODO: VITAL, DELETE AFTER TESTING IS ALL GOOD.
 
     const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
 
-    request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
+    const createObjectStores = (ev: Event) => {
+        const db = (ev.target as IDBOpenDBRequest).result;
 
         if (!db.objectStoreNames.contains(FILE_METADATA_STORE)) {
             const metadataStore = db.createObjectStore(FILE_METADATA_STORE, { keyPath: "id" });
@@ -182,8 +182,13 @@ const openDB = async (): Promise<IDBDatabase> => {
         }
     };
 
+    request.onupgradeneeded = createObjectStores;
+
     dbInstance = await new Promise<IDBDatabase>((resolve, reject) => {
-        request.onsuccess = () => resolve(request.result);
+        request.onsuccess = (ev) => {
+            createObjectStores(ev);
+            resolve(request.result);
+        }
         request.onerror = () => reject(new FileSystemError("Failed to open database", request.error));
     });
 

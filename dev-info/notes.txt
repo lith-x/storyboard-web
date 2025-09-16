@@ -132,7 +132,7 @@ TODO List:
   - Panels: Home, Files, Scripts, Settings/Help
   - Sidebar
   - ControlBar
-- Backend (hook pieces together to enable functionality)
+- Backend (hook pieces togetendereher to enable functionality)
   - Data representation
   - Render / Timeline synchronization/optimization
   - Parsing/compiling: .osb->data & data->.osb
@@ -145,3 +145,33 @@ Performance:
 - lengths: short: 30 sec, avg: 2-4 mins, long: 6 mins, very long: 10 mins, incredibly long but not unheard of: 30 mins
 - commands: long, complex storyboards can well above 500,000 individual command lines
 - sprites: looking at potentially hundreds.
+
+
+
+
+Splitting the project up:
+- The project is just too much for my tiny brain to manage, so split it up with basic inputs and outputs that
+  should theoretically be very simple to link together by matching one's output to another's input.
+
+- Renderer
+  - input: active data
+  - output: visuals (none)
+- Text editor
+  - input: text from user
+  - output: script
+- TS Library
+  - input: script
+  - output:
+
+
+
+
+
+
+
+Renderer:
+- PixiJS
+  - Commands via "Filters"
+  - "Assetpack" for sprite management?
+  - Allows mouse events~
+  - Write OSB renderer as a PixiJS extension??
