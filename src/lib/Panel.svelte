@@ -5,7 +5,6 @@
   import Settings from "./panels/SettingsPanel.svelte";
 
   const { activeTab = $bindable(homeTabData.id) } = $props();
-  // TODO: this will basically be a switcher between everything in ./panels
 </script>
 
 <div class="bg-rose-300">

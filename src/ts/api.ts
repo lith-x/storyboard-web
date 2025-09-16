@@ -110,8 +110,8 @@ interface ObjEvent {
     params: number[]
 }
 
-interface ChainData {
-    objId: string,
+interface SpriteData {
+    fileId: string,
     also: boolean,
     time: number,
     lastDuration: number,
@@ -125,9 +125,9 @@ type OneParamCommandCallback = {
     (range: [startValue: number, endValue: number], duration?: number, easing?: Easing): AllFunctionsChain;
 }
 
-const singleParamCommand = (data: ChainData, type: CmdType, field: ObjNumParam): OneParamCommandCallback => {
+const singleParamCommand = (data: SpriteData, type: CmdType, field: ObjNumParam): OneParamCommandCallback => {
     return (vals: number | number[], duration?: number, easing?: Easing) => {
-        const realDuration = duration ?? 0;
+        const realDuration = duration ?? data.lastDuration;
         const evt: ObjEvent = {
             easing: easing ?? Easing.Linear,
             startTime: data.time,
@@ -150,16 +150,17 @@ const singleParamCommand = (data: ChainData, type: CmdType, field: ObjNumParam):
             data.also = false;
         } else {
             data.time += realDuration;
+            data.lastDuration = realDuration;
         }
         return allFuncsObj(data);
     };
 };
 
 
-const fadeImpl = (data: ChainData) => singleParamCommand(data, CmdType.Fade, "opacity");
-const moveXImpl = (data: ChainData) => singleParamCommand(data, CmdType.MoveX, "posX");
-const moveYImpl = (data: ChainData) => singleParamCommand(data, CmdType.MoveY, "posY");
-const rotateImpl = (data: ChainData) => singleParamCommand(data, CmdType.Rotate, "rotation");
+const fadeImpl = (data: SpriteData) => singleParamCommand(data, CmdType.Fade, "opacity");
+const moveXImpl = (data: SpriteData) => singleParamCommand(data, CmdType.MoveX, "posX");
+const moveYImpl = (data: SpriteData) => singleParamCommand(data, CmdType.MoveY, "posY");
+const rotateImpl = (data: SpriteData) => singleParamCommand(data, CmdType.Rotate, "rotation");
 
 
 type XYCallback = {
@@ -167,21 +168,21 @@ type XYCallback = {
     (startX: number, startY: number, endX: number, endY: number, duration?: number, easing?: Easing): AllFunctionsChain;
 }
 
-const moveImpl = (data: ChainData): XYCallback => {
+const moveImpl = (data: SpriteData): XYCallback => {
     return (startOrToX: number, startOrToY: number, endXOrDuration?: number, endYMaybe?: number, durationMaybe?: number, easing?: Easing) => {
         // add move event
         return allFuncsObj(data);
     }
 };
 
-const vectorScaleImpl = (data: ChainData): XYCallback => {
+const vectorScaleImpl = (data: SpriteData): XYCallback => {
     return (startOrToScaleX: number, startOrToScaleY: number, endScaleXOrDuration?: number, endScaleYMaybe?: number, durationMaybe?: number, easing?: Easing) => {
         // add vectorScale event
         return allFuncsObj(data);
     };
 }
 
-const scaleImpl = (data: ChainData): OneParamCommandCallback => {
+const scaleImpl = (data: SpriteData): OneParamCommandCallback => {
     return (vals: number | number[], duration?: number, easing?: Easing) => {
         if (typeof vals === "number") {
             return vectorScaleImpl(data)(vals, vals, duration, easing);
@@ -197,7 +198,7 @@ type ColorCallback = {
     (startR: number, startG: number, startB: number, endR: number, endG: number, endB: number, duration: number, easing?: Easing): AllFunctionsChain;
 }
 
-const colorImpl = (data: ChainData): ColorCallback => {
+const colorImpl = (data: SpriteData): ColorCallback => {
     return (startR: number, startG: number, startB: number, endR?: number, endG?: number, endB?: number, duration?: number, easing?: Easing) => {
         // add color event
         return allFuncsObj(data);
@@ -209,7 +210,7 @@ type ParamCallback = {
     (toParam: Parameter, duration: number, easing?: Easing): AllFunctionsChain;
 }
 
-const paramImpl = (data: ChainData): ParamCallback => {
+const paramImpl = (data: SpriteData): ParamCallback => {
     return (param: Parameter, duration?: number, easing?: Easing) => {
         // add parameter event
         return allFuncsObj(data);
@@ -219,7 +220,7 @@ const paramImpl = (data: ChainData): ParamCallback => {
 
 type AtCallback = (time: number) => CommandsChain;
 
-const atImpl = (data: ChainData) => {
+const atImpl = (data: SpriteData) => {
     return (time: number) => {
         data.time = time;
         return commandsObj(data);
@@ -229,7 +230,7 @@ const atImpl = (data: ChainData) => {
 
 type AlsoCallback = () => CommandsChain;
 
-const alsoImpl = (data: ChainData) => {
+const alsoImpl = (data: SpriteData) => {
     return () => {
         data.also = true;
         commandsObj(data);
@@ -239,7 +240,7 @@ const alsoImpl = (data: ChainData) => {
 
 type WaitCallback = (time: number) => CommandsChain;
 
-const waitImpl = (data: ChainData) => {
+const waitImpl = (data: SpriteData) => {
     return (duration: number) => {
         data.time += duration;
         return commandsObj(data);
@@ -261,10 +262,10 @@ type CommandsChain = {
 type AllFunctionsChain = CommandsChain & {
     at: AtCallback,
     also: AlsoCallback,
-    wait: WaitCallback
+    wait: WaitCallback,
 }
 
-const commandsObj = (data: ChainData) => {
+const commandsObj = (data: SpriteData) => {
     return {
         fade: fadeImpl(data),
         move: moveImpl(data),
@@ -278,7 +279,7 @@ const commandsObj = (data: ChainData) => {
     }
 }
 
-const allFuncsObj = (data: ChainData) => {
+const allFuncsObj = (data: SpriteData) => {
     return {
         at: atImpl(data),
         wait: waitImpl(data),
@@ -296,28 +297,23 @@ const allFuncsObj = (data: ChainData) => {
 }
 
 
-
-interface FileData { id: string, contents: Blob }
-
-const _getFile = (filepath: string) => {
+const getDummyId = (_filepath: string) => {
     // dummy function
-    return {
-        id: crypto.randomUUID(),
-        contents: new Blob([])
-    } as FileData;
+    return crypto.randomUUID();
 }
 
-const objs: ChainData[] = [];
+const spriteDatas: SpriteData[] = [];
 
 export const sprite = (filepath: string, opts?: SpriteOpts) => {
     // TODO: grab file from IndexedDB / cache
-    const file = _getFile(filepath);
-    const data: ChainData = {
+    const fileId = getDummyId(filepath);
+    const data: SpriteData = {
         time: 0,
         also: false,
         lastDuration: 0,
-        objId: file.id,
+        fileId: fileId,
         events: [],
+        // TODO: validate/cross-reference default state vals in osu client.
         objState: {
             posX: opts?.x ?? 0,
             posY: opts?.y ?? 0,
@@ -331,7 +327,7 @@ export const sprite = (filepath: string, opts?: SpriteOpts) => {
             parameter: new Set(),
         }
     };
-    objs.push(data);
+    spriteDatas.push(data);
     return {
         at: atImpl(data)
     };
@@ -345,3 +341,18 @@ foo.at(0).fade(0.5) // time: 0, fade: 0.5, dur: 0
     .also().rotate([0, Math.PI], 500) // time: 0, rotate: 0->PI, dur: 500
     .move(150, 150, 300) // time: 1000 pos: (100,100)->(150,150), dur: 300
     .at(50).scale([1, 2]) // time: 50, scale: 1->2, dur: 300
+
+
+// Unimplemented sample
+
+let loopSprite: any;
+loopSprite.at(0).loop(5, (sprite: any) => {
+    sprite.move(100, 100, 30)
+        .also().fade(0, 1, 50)
+})
+
+let triggerSprite: any;
+triggerSprite.at(0).trigger("Passing", (sprite: any) => {
+    sprite.move(100, 100, 30)
+        .also().fade(0, 1, 50)
+});

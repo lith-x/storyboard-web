@@ -1,5 +1,8 @@
 type Values<T> = T[keyof T];
 
+// TODO: most of this is probably going to migrate over to api.ts,
+//       clean this up once that has pretty much everything necessary.
+
 // Enums
 
 export const SbObjectType = {
