@@ -1,4 +1,4 @@
-type Values<T> = T[keyof T];
+import { z, ZodIssueCode } from "zod";
 
 export const Easing = {
     Linear: 0,
@@ -37,14 +37,16 @@ export const Easing = {
     BounceOut: 33,
     BounceInOut: 34,
 } as const;
-export type Easing = Values<typeof Easing>;
+const zEasing = z.enum(Easing);
+type Easing = z.infer<typeof zEasing>;
 
 const Parameter = {
     Horizontal: "H",
     Vertical: "V",
     AlphaBlend: "A"
 } as const;
-type Parameter = Values<typeof Parameter>;
+const zParameter = z.enum(Parameter);
+type Parameter = z.infer<typeof zParameter>;
 
 const Origin = {
     TopLeft: "TopLeft",
@@ -58,7 +60,8 @@ const Origin = {
     BottomLeft: "BottomLeft",
     BottomRight: "BottomRight"
 } as const;
-type Origin = Values<typeof Origin>;
+const zOrigin = z.enum(Origin);
+type Origin = z.infer<typeof zOrigin>;
 
 const Layer = {
     Background: "Background",
@@ -66,7 +69,8 @@ const Layer = {
     Pass: "Pass",
     Foreground: "Foreground"
 } as const;
-type Layer = Values<typeof Layer>;
+const zLayer = z.enum(Layer);
+type Layer = z.infer<typeof zLayer>;
 
 const CmdType = {
     Fade: "F",
@@ -81,37 +85,42 @@ const CmdType = {
     Loop: "L",
     Trigger: "T"
 } as const;
-type CmdType = Values<typeof CmdType>;
+const zCmdType = z.enum(CmdType);
+type CmdType = z.infer<typeof zCmdType>;
 
-interface SpriteOpts {
-    x?: number,
-    y?: number,
-    origin?: Origin,
-    layer?: Layer
-}
+const zSpriteOpts = z.object({
+    x: z.number().optional(),
+    y: z.number().optional(),
+    origin: zOrigin.optional(),
+    layer: zLayer.optional()
+});
+type SpriteOpts = z.infer<typeof zSpriteOpts>;
 
-type ObjState = {
-    posX: number,
-    posY: number,
-    scaleX: number,
-    scaleY: number,
-    opacity: number,
-    rotation: number,
-    colorR: number,
-    colorG: number,
-    colorB: number,
-    parameter: Set<Parameter>
-}
-type ObjNumParam = keyof Omit<ObjState, "parameter">;
+const zObjState = z.object({
+    posX: z.number(),
+    posY: z.number(),
+    scaleX: z.number(),
+    scaleY: z.number(),
+    opacity: z.number(),
+    rotation: z.number(),
+    colorR: z.number(),
+    colorG: z.number(),
+    colorB: z.number(),
+    parameter: z.set(zParameter)
+});
+type ObjState = z.infer<typeof zObjState>;
 
-interface ObjEvent {
-    type: CmdType,
-    easing: Easing,
-    startTime: number,
-    endTime: number,
-    params: number[] | string[],
-    subEvents: ObjEvent[] | null
-}
+const zObjEvent = z.object({
+    type: zCmdType,
+    easing: zEasing,
+    startTime: z.number(),
+    endTime: z.number(),
+    params: z.union([z.array(z.number()), z.array(z.string())]),
+    get subEvents() {
+        return z.nullable(z.array(zObjEvent));
+    }
+});
+type ObjEvent = z.infer<typeof zObjEvent>;
 
 interface SpriteData {
     fileId: string,
@@ -121,41 +130,17 @@ interface SpriteData {
     objState: ObjState,
     events: ObjEvent[]
 }
+const zSpriteData = z.object({
+});
 
 const throwCmdFormatError = (type: CmdType) => { throw new Error(`Parameters of command ${type} are not well-formatted.`); }
 
-type OneParamCommandCallback = {
-    (toValue: number, duration?: number, easing?: Easing): AllFunctionsChain;
-    (range: [startValue: number, endValue: number], duration?: number, easing?: Easing): AllFunctionsChain;
-}
-
-type XYCallback = {
-    (toX: number, toY: number, duration?: number, easing?: Easing): AllFunctionsChain;
-    (rangeFrom: [fromX: number, fromY: number], rangeTo: [toX: number, toY: number], duration?: number, easing?: Easing): AllFunctionsChain;
-}
-
-const singleParamCommand = (data: SpriteData, type: CmdType, field: ObjNumParam): OneParamCommandCallback => {
-    return (vals: number | number[], duration?: number, easing?: Easing) => {
-        return handleCommand(data, type, [field], [vals], duration, easing);
-    };
-};
-
-const xyParamCommand = (data: SpriteData, type: CmdType, fields: ObjNumParam[]): XYCallback => {
-    return (fromValsOrToX: number | number[], toValsOrToY: number | number[], duration?: number, easing?: Easing) => {
-        return handleCommand(data, type, fields, [fromValsOrToX, toValsOrToY], duration, easing);
+class CommandParameterFormatError extends Error {
+    constructor(message?: string, options?: ErrorOptions) {
+        super(message, options);
+        this.name = "CommandParameterFormatError";
     }
-};
-
-
-const scaleImpl = (data: SpriteData): OneParamCommandCallback => {
-    return (vals: number | number[], duration?: number, easing?: Easing) => {
-        if (typeof vals === "number") {
-            return vectorScaleImpl(data)(vals, vals, duration, easing);
-        } else {
-            return vectorScaleImpl(data)([vals[0], vals[0]], [vals[1], vals[1]], duration, easing);
-        }
-    };
-};
+}
 
 interface AtOnlyMethods {
     at(time: number): SpriteCommands;
@@ -167,8 +152,8 @@ interface FlowControlMethods {
 }
 
 interface BaseSprite {
-    fade(toValue: number, duration?: number, easing?: Easing): SpriteAll;
-    fade(range: [startValue: number, endValue: number], duration?: number, easing?: Easing): SpriteAll;
+    fade(toOpacity: number, duration?: number, easing?: Easing): SpriteAll;
+    fade(range: [fromOpacity: number, toOpacity: number], duration?: number, easing?: Easing): SpriteAll;
 
     moveX(toX: number, duration?: number, easing?: Easing): SpriteAll;
     moveX(range: [fromX: number, toX: number], duration?: number, easing?: Easing): SpriteAll;
@@ -183,89 +168,29 @@ interface BaseSprite {
     rotate(range: [startRotation: number, endRotation: number], duration?: number, easing?: Easing): SpriteAll;
 
     move(toX: number, toY: number, duration?: number, easing?: Easing): SpriteAll;
-    move(rangeFrom: [fromX: number, fromY: number], rangeTo: [toX: number, toY: number], duration?: number, easing?: Easing): SpriteAll;
+    move(fromVals: [fromX: number, fromY: number], toVals: [toX: number, toY: number], duration?: number, easing?: Easing): SpriteAll;
 
     vectorScale(toScaleX: number, toScaleY: number, duration?: number, easing?: Easing): SpriteAll;
-    vectorScale(rangeFrom: [fromScaleX: number, fromScaleY: number], rangeTo: [toScaleX: number, toScaleY: number], duration?: number, easing?: Easing): SpriteAll;
+    vectorScale(fromVals: [fromScaleX: number, fromScaleY: number], toVals: [toScaleX: number, toScaleY: number], duration?: number, easing?: Easing): SpriteAll;
 
     color(toR: number, toG: number, toB: number, duration?: number, easing?: Easing): SpriteAll;
-    color(rangeFrom: [fromR: number, fromG: number, fromB: number], rangeTo: [toR: number, toG: number, toB: number], duration?: number, easing?: Easing): SpriteAll;
+    color(fromVals: [fromR: number, fromG: number, fromB: number], toVals: [toR: number, toG: number, toB: number], duration?: number, easing?: Easing): SpriteAll;
 
     param(params: Parameter | Parameter[], duration?: number, easing?: Easing): SpriteAll;
 }
 
 // Three-state conditional intersection
-type SpriteType<State extends "initial" | "commands" | "all"> =
+type SpriteType<State extends "initial" | "commands" | "all" | "complete"> =
     State extends "initial" ? AtOnlyMethods :
     State extends "commands" ? BaseSprite :
     State extends "all" ? AtOnlyMethods & FlowControlMethods & BaseSprite :
     never;
 
+const zColorVal = z.int().min(0).max(255);
+const zColorTuple = z.tuple([zColorVal, zColorVal, zColorVal]);
+
 class SpriteImpl implements AtOnlyMethods, BaseSprite, FlowControlMethods {
     constructor(private data: SpriteData) { }
-
-    fade(range: number | number[], duration?: number, easing?: Easing): SpriteAll {
-        return this.handleCommand(CmdType.Fade, ["opacity"], [range], duration, easing);
-    }
-
-    moveX(range: number | number[], duration?: number, easing?: Easing): SpriteAll {
-        return this.handleCommand(CmdType.MoveX, ["posX"], [range], duration, easing);
-    }
-
-    moveY(range: number | number[], duration?: number, easing?: Easing): SpriteAll {
-        return this;
-    }
-
-    scale(range: number | number[], duration?: number, easing?: Easing): SpriteAll {
-        return this;
-    }
-
-    rotate(range: number | number[], duration?: number, easing?: Easing): SpriteAll {
-        return this;
-    }
-
-    move(rangeFrom: number | number[], rangeTo: number | number[], duration?: number, easing?: Easing): SpriteAll {
-        return this;
-    }
-
-    vectorScale(rangeFrom: number | number[], rangeTo: number | number[], duration?: number, easing?: Easing): SpriteAll {
-        return this;
-    }
-
-    color(toROrRangeFrom: number | number[], toGOrRangeTo: number | number[], toBOrDuration?: number, durationOrEasing?: number | Easing, easingMaybe?: Easing): SpriteAll {
-        if (toROrRangeFrom instanceof Array && toGOrRangeTo instanceof Array) {
-            // TODO: the "as" here is doing a compile-time check, should be a runtime check as an additional check in "if"
-            return this.handleCommand(CmdType.Color, ["colorR", "colorG", "colorB"], [toROrRangeFrom, toGOrRangeTo], toBOrDuration, durationOrEasing as Easing);
-        } else if (typeof toBOrDuration === "number") {
-            return this.handleCommand(CmdType.Color, ["colorR", "colorG", "colorB"], [toROrRangeFrom, toGOrRangeTo, toBOrDuration], durationOrEasing, easingMaybe);
-        } else {
-            return throwCmdFormatError(CmdType.Color);
-        }
-    }
-
-    param(params: Parameter | Parameter[], duration?: number, easing?: Easing): SpriteAll {
-        const realDuration = duration ?? this.data.lastDuration;
-        const evt: ObjEvent = {
-            easing: easing ?? Easing.Linear,
-            startTime: this.data.time,
-            endTime: this.data.time + realDuration,
-            type: CmdType.Parameter,
-            params: [],
-            subEvents: null
-        };
-        for (const refParam of Object.values(Parameter)) {
-            if (params.includes(refParam))
-                (evt.params as string[]).push(refParam);
-        }
-        this.data.events.push(evt);
-        if (this.data.also) {
-            this.data.also = false;
-        } else {
-            this.data.time += realDuration;
-            this.data.lastDuration = realDuration;
-        }
-        return this;
-    }
 
     at(time: number): SpriteCommands {
         this.data.time = time;
@@ -282,43 +207,120 @@ class SpriteImpl implements AtOnlyMethods, BaseSprite, FlowControlMethods {
         return this;
     }
 
-
-    private singleParamCommand = (type: CmdType, field: ObjNumParam): OneParamCommandCallback => {
-        return (vals: number | number[], duration?: number, easing?: Easing) => {
-            return this.handleCommand(type, [field], [vals], duration, easing);
-        };
-    };
-
-    private handleCommand(type: CmdType, stateSetFields: ObjNumParam[], params: (number | number[])[], duration?: number, easing?: Easing) {
+    private handleSimpleCommand = z.function({
+        input: [
+            zCmdType, zObjState.keyof().exclude(["parameter"]),
+            z.union([z.number(), z.tuple([z.number(), z.number()])]),
+            z.number().optional(),
+            zEasing.optional()]
+    }).implement((type, field, vals, duration, easing): SpriteImpl => {
         const realDuration = duration ?? this.data.lastDuration;
-        const evt: ObjEvent = {
+        const params: number[] = [];
+        if (typeof vals == "number") {
+            params.push(this.data.objState[field], vals);
+            this.data.objState[field] = vals;
+        } else if (vals instanceof Array && vals.length == 2) {
+            params.push(...vals);
+            this.data.objState[field] = vals[1];
+        }
+        return this.commandCommon(type, params, realDuration, easing);
+    });
+
+    fade(vals: number | [number, number], duration?: number, easing?: Easing): SpriteAll {
+        return this.handleSimpleCommand(CmdType.Fade, "opacity", vals, duration, easing);
+    }
+
+    moveX(vals: number | [number, number], duration?: number, easing?: Easing): SpriteAll {
+        return this.handleSimpleCommand(CmdType.MoveX, "posX", vals, duration, easing);
+    }
+
+    moveY(vals: number | [number, number], duration?: number, easing?: Easing): SpriteAll {
+        return this.handleSimpleCommand(CmdType.MoveY, "posY", vals, duration, easing);
+    }
+
+    rotate(vals: number | [number, number], duration?: number, easing?: Easing): SpriteAll {
+        return this.handleSimpleCommand(CmdType.Rotate, "rotation", vals, duration, easing);
+    }
+
+    param = z.function({
+        input: [
+            z.union([zParameter, z.array(zParameter)]),
+            z.number().optional(),
+            zEasing.optional()
+        ]
+    }).implement((params, duration, easing): SpriteAll => {
+        if (!(params instanceof Array)) params = [params];
+        const result: string[] = [];
+        for (let i = 0; i < params.length; i++) {
+            if (!result.includes(params[i]))
+                result.push(params[i]);
+        }
+        return this.commandCommon(CmdType.Parameter, result, duration, easing);
+    });
+
+    scale(vals: number | [number, number], duration?: number, easing?: Easing): SpriteAll {
+        if (typeof vals === "number") {
+            return this.handleXYCommand(CmdType.Scale, ["scaleX", "scaleY"], [vals, vals], duration, easing);
+        } else {
+            return this.handleXYCommand(CmdType.Scale, ["scaleX", "scaleY"], [[vals[0], vals[0]], [vals[1], vals[1]]], duration, easing);
+        }
+    }
+
+    move(fromValsOrToX: number | [number, number], toValsOrToY: number | [number, number], duration?: number, easing?: Easing): SpriteAll {
+        // as: zod does run-time type validation in handleXYCommand
+        return this.handleXYCommand(CmdType.Move, ["posX", "posY"], [fromValsOrToX as number, toValsOrToY as number], duration, easing);
+    }
+
+    vectorScale(fromValsOrToScaleX: number | [number, number], toValsOrToScaleY: number | [number, number], duration?: number, easing?: Easing): SpriteAll {
+        // as: zod does run-time type validation in handleXYCommand
+        return this.handleXYCommand(CmdType.VectorScale, ["scaleX", "scaleY"], [fromValsOrToScaleX as number, toValsOrToScaleY as number], duration, easing);
+    }
+
+    private handleXYCommand = z.function({
+        input: [
+            zCmdType,
+            z.array(zObjState.keyof().exclude(["parameter"])).length(2),
+            z.union([z.tuple([z.number(), z.number()]), z.tuple([z.tuple([z.number(), z.number()]), z.tuple([z.number(), z.number()])])]),
+            z.number().optional(),
+            zEasing.optional()]
+    }).implement((type, fields, vals, duration, easing): SpriteImpl => {
+        const params: number[] = [];
+        if (typeof vals[0] == "number" && typeof vals[1] == "number") {
+            params.push(this.data.objState[fields[0]], this.data.objState[fields[1]], vals[0], vals[1]);
+        } else if (vals[0] instanceof Array && vals[1] instanceof Array){
+            params.push(...vals[0], ...vals[1]);
+        }
+        return this.commandCommon(type, params, duration, easing);
+    });
+
+    color(fromValsOrToR: number | number[], toValsOrToG: number | number[], durationOrToB?: number, easingOrDuration?: number | Easing, easingMaybe?: Easing): SpriteAll {
+        if (fromValsOrToR instanceof Array) {
+            return this.colorImpl([fromValsOrToR as any, toValsOrToG as any], durationOrToB, easingOrDuration as Easing);
+        }
+        // color(toR: number, toG: number, toB: number, duration?: number, easing?: Easing): SpriteAll;
+        // color(fromVals: [fromR: number, fromG: number, fromB: number], toVals: [toR: number, toG: number, toB: number], duration?: number, easing?: Easing): SpriteAll;
+
+        return this;
+    }
+
+    private colorImpl = z.function({input: [
+        z.union([z.tuple([zColorVal, zColorVal, zColorVal]), z.tuple([zColorTuple, zColorTuple])]),
+        z.number().optional(),
+        zEasing.optional()
+    ]}).implement((vals, duration, easing): SpriteImpl => {
+        return this;
+    })
+
+    private commandCommon(type: CmdType, params: number[] | string[], duration?: number, easing?: Easing) {
+        const realDuration = duration ?? this.data.lastDuration;
+        this.data.events.push({
             easing: easing ?? Easing.Linear,
             startTime: this.data.time,
             endTime: this.data.time + realDuration,
             type: type,
-            params: [],
+            params: params,
             subEvents: null
-        };
-        if (params.every(v => typeof v === "number")) {
-            if (params.length != stateSetFields.length)
-                return throwCmdFormatError(type);
-            for (let i = 0; i < stateSetFields.length; i++) {
-                const field = stateSetFields[i];
-                (evt.params as number[]).push(this.data.objState[field]);
-                this.data.objState[field] = params[i];
-            }
-            (evt.params as number[]).push(...params);
-        } else if (params.every(v => v instanceof Array)) {
-            // FIXME: This completely butchers single parameter commands.
-            if (params.length != 2 || params[0].length != params[1].length || params[0].length != stateSetFields.length)
-                return throwCmdFormatError(type);
-            (evt.params as number[]).push(...params[0], ...params[1]);
-            for (let i = 0; i < params[1].length; i++) {
-                this.data.objState[stateSetFields[i]] = params[1][i];
-            }
-        }
-        this.data.events.push(evt);
-
+        });
         if (this.data.also) {
             this.data.also = false;
         } else {
@@ -326,12 +328,14 @@ class SpriteImpl implements AtOnlyMethods, BaseSprite, FlowControlMethods {
             this.data.lastDuration = realDuration;
         }
         return this;
-    };
+    }
 }
 
 type SpriteInitial = SpriteType<"initial">;
 type SpriteCommands = SpriteType<"commands">;
 type SpriteAll = SpriteType<"all">;
+type SpriteCompiled = SpriteType<"complete">;
+type UserInputParam = Parameter | Parameter[] | number | number[];
 
 
 const getDummyId = (_filepath: string) => {
@@ -408,3 +412,13 @@ const triggerImpl = (data: SpriteData) => {
 
     };
 }
+
+
+/*
+Breaking problem with the "use last value" approach.
+ .at() completely breaks continuity.
+
+
+
+
+*/
