@@ -1,4 +1,15 @@
-import { z, ZodIssueCode } from "zod";
+import { z } from "zod";
+
+/*
+TODO list:
+- loop / trigger commands, design and implementation
+- decide what happens to object state when using "at" (revert to default or keep)
+  - potentially keep state with a .reset() function to explicitly revert state to default
+- compilation strategy: .compile(), compile(sprite), compileAll() ?
+- animations and audio sample sb-objects.
+- rename everything to be more sensible?
+
+*/
 
 export const Easing = {
     Linear: 0,
@@ -96,6 +107,9 @@ const zSpriteOpts = z.object({
 });
 type SpriteOpts = z.infer<typeof zSpriteOpts>;
 
+const zColorVal = z.int().min(0).max(255);
+const zColorTuple = z.tuple([zColorVal, zColorVal, zColorVal]);
+
 const zObjState = z.object({
     posX: z.number(),
     posY: z.number(),
@@ -103,9 +117,9 @@ const zObjState = z.object({
     scaleY: z.number(),
     opacity: z.number(),
     rotation: z.number(),
-    colorR: z.number(),
-    colorG: z.number(),
-    colorB: z.number(),
+    colorR: zColorVal,
+    colorG: zColorVal,
+    colorB: zColorVal,
     parameter: z.set(zParameter)
 });
 type ObjState = z.infer<typeof zObjState>;
@@ -129,17 +143,6 @@ interface SpriteData {
     lastDuration: number,
     objState: ObjState,
     events: ObjEvent[]
-}
-const zSpriteData = z.object({
-});
-
-const throwCmdFormatError = (type: CmdType) => { throw new Error(`Parameters of command ${type} are not well-formatted.`); }
-
-class CommandParameterFormatError extends Error {
-    constructor(message?: string, options?: ErrorOptions) {
-        super(message, options);
-        this.name = "CommandParameterFormatError";
-    }
 }
 
 interface AtOnlyMethods {
@@ -185,9 +188,6 @@ type SpriteType<State extends "initial" | "commands" | "all" | "complete"> =
     State extends "commands" ? BaseSprite :
     State extends "all" ? AtOnlyMethods & FlowControlMethods & BaseSprite :
     never;
-
-const zColorVal = z.int().min(0).max(255);
-const zColorTuple = z.tuple([zColorVal, zColorVal, zColorVal]);
 
 class SpriteImpl implements AtOnlyMethods, BaseSprite, FlowControlMethods {
     constructor(private data: SpriteData) { }
@@ -287,28 +287,37 @@ class SpriteImpl implements AtOnlyMethods, BaseSprite, FlowControlMethods {
         const params: number[] = [];
         if (typeof vals[0] == "number" && typeof vals[1] == "number") {
             params.push(this.data.objState[fields[0]], this.data.objState[fields[1]], vals[0], vals[1]);
-        } else if (vals[0] instanceof Array && vals[1] instanceof Array){
+        } else if (vals[0] instanceof Array && vals[1] instanceof Array) {
             params.push(...vals[0], ...vals[1]);
         }
         return this.commandCommon(type, params, duration, easing);
     });
 
     color(fromValsOrToR: number | number[], toValsOrToG: number | number[], durationOrToB?: number, easingOrDuration?: number | Easing, easingMaybe?: Easing): SpriteAll {
+        // pass the params through a zod validation layer to make sure it's at least shaped correctly.
         if (fromValsOrToR instanceof Array) {
             return this.colorImpl([fromValsOrToR as any, toValsOrToG as any], durationOrToB, easingOrDuration as Easing);
+        } else {
+            return this.colorImpl([fromValsOrToR as number, toValsOrToG as number, durationOrToB as number], easingOrDuration, easingMaybe);
         }
-        // color(toR: number, toG: number, toB: number, duration?: number, easing?: Easing): SpriteAll;
-        // color(fromVals: [fromR: number, fromG: number, fromB: number], toVals: [toR: number, toG: number, toB: number], duration?: number, easing?: Easing): SpriteAll;
-
-        return this;
     }
 
-    private colorImpl = z.function({input: [
-        z.union([z.tuple([zColorVal, zColorVal, zColorVal]), z.tuple([zColorTuple, zColorTuple])]),
-        z.number().optional(),
-        zEasing.optional()
-    ]}).implement((vals, duration, easing): SpriteImpl => {
-        return this;
+    private colorImpl = z.function({
+        input: [
+            z.union([z.tuple([zColorVal, zColorVal, zColorVal]), z.tuple([zColorTuple, zColorTuple])]),
+            z.number().optional(),
+            zEasing.optional()
+        ]
+    }).implement((vals, duration, easing): SpriteImpl => {
+        const params: number[] = [];
+        if (vals[0] instanceof Array) {
+            // as: the vals union type only allows [[number, number, number], [number, number, number]] in here. it's fine.
+            params.push(...vals[0], ...vals[1] as number[]);
+        } else {
+            // as: only type that is (supposed to be) able to reach this code path is [number, number, number].
+            params.push(this.data.objState.colorR, this.data.objState.colorG, this.data.objState.colorB, vals[0] as number, vals[1] as number, vals[2] as number);
+        }
+        return this.commandCommon(CmdType.Color, params, duration, easing);
     })
 
     private commandCommon(type: CmdType, params: number[] | string[], duration?: number, easing?: Easing) {
@@ -335,7 +344,6 @@ type SpriteInitial = SpriteType<"initial">;
 type SpriteCommands = SpriteType<"commands">;
 type SpriteAll = SpriteType<"all">;
 type SpriteCompiled = SpriteType<"complete">;
-type UserInputParam = Parameter | Parameter[] | number | number[];
 
 
 const getDummyId = (_filepath: string) => {
